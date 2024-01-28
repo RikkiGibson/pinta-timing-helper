@@ -1,0 +1,140 @@
+
+:root {
+    --pintaYellow: #f8b503;
+    --pintaBlue: #297a9c;
+    --pintaSilver: #cbcbcb;
+}
+
+/*
+    pinta colors
+*/
+
+body {
+    background-color: darkgray;
+    width: 500px;
+}
+
+.row {
+    display: flex;
+    margin: 5px;
+}
+
+.header {
+    align-items: center;
+    justify-content: center;
+}
+
+.header-image {
+    border-radius: 9px;
+    overflow: hidden;
+    background-color: var(--pintaBlue);
+}
+
+.controls {
+    align-items: flex-end;
+}
+
+.column {
+    display: flex;
+    flex-direction: column;
+}
+
+.padded {
+    padding: 5px;
+    margin: 5px;
+}
+
+.timing-meter {
+    background-color: var(--pintaBlue);
+    border: solid 1px var(--pintaSilver);
+    position: relative;
+}
+
+.timing-line {
+    width: 2px;
+    background-color: var(--pintaSilver);
+    position: absolute;
+    height: 20px;
+}
+
+.timing-icons {
+    position: relative;
+    align-items: center;
+}
+
+.timing-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.timing-lead-up {
+    clip-path: polygon(0% 0%, 100% 0%, 50% 100%);
+    position: absolute;
+    height: 17px;
+    width: 17px;
+    background-color: var(--pintaBlue);
+}
+
+.timing-target {
+    clip-path: polygon(0% 0%, 100% 0%, 50% 100%);
+    position: absolute;
+    height: 20px;
+    width: 20px;
+    background-color: var(--pintaBlue);
+}
+
+.timing-hit {
+    clip-path: polygon(0% 0%, 100% 0%, 50% 100%);
+    background-color: var(--pintaYellow);
+    width: 60%;
+    height: 60%;
+}
+
+.timing-hit-marker {
+    position: absolute;
+    display: flex;
+    align-items: center;
+}
+
+.timing-hit-icon {
+    clip-path: polygon(0% 100%, 100% 100%, 50% 0%);
+    background-color: red;
+    width: 20px;
+    height: 20px;
+}
+
+.timing-hit-description {
+    margin-left: 2px;
+    font-size: small;
+    font: bold small sans-serif;
+}
+
+.timing-spacer {
+    height: 20px;
+}
+
+.timing-cursor {
+    background-color: #f8b503;
+    height: 20px;
+    width: 0px;
+}
+
+.animated {
+    /* animation-duration: 3s; */
+    animation-name: progress;
+    /* animation-iteration-count: infinite; */
+    /* animation-direction: alternate; */
+    animation-fill-mode: forwards;
+    animation-timing-function: linear;
+}
+
+@keyframes progress {
+    from {
+        width: 0;
+    }
+
+    to {
+        width: 100%;
+    }
+}

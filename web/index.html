@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <link rel="stylesheet" href="index.css" />
+  <title>Pinta's Quest Timing Helper</title>
+  <!-- TODO: favicon? fishhook or maybe the little propeller?? -->
+</head>
+
+<body>
+  <div class="column">
+    <div class="row header">
+      <div class="header-image">
+        <img src="img/Flag_pinta.webp"/>
+      </div>
+    </div>
+    <div class="row controls">
+      <div class="column">
+        <button id="start-stop-button" class="padded">Start/stop</button>
+        <button id="beep-button" class="padded">Beep</button>
+      </div>
+      <canvas id="frequency-graph" class="padded"></canvas>
+    </div>
+    <div class="column timing-visualizer">
+      <div class="row timing-icons">
+        <div class="timing-spacer"></div>
+        <div class="timing-icon timing-lead-up">
+          <div class="timing-lead-up-inner"></div>
+        </div>
+        <div class="timing-icon timing-lead-up">
+          <div class="timing-lead-up-inner"></div>
+        </div>
+        <div class="timing-icon timing-lead-up">
+          <div class="timing-lead-up-inner"></div>
+        </div>
+        <div class="timing-icon timing-target">
+          <div id="timing-target-inner" class="timing-target-inner"></div>
+        </div>
+      </div>
+      <div class="row timing-meter">
+        <div class="timing-line"></div>
+        <div class="timing-line"></div>
+        <div class="timing-line"></div>
+        <div class="timing-line"></div>
+        <div id="timing-cursor" class="timing-cursor"></div>
+      </div>
+      <div class="row timing-icons">
+        <div class="timing-spacer"></div>
+        <div id="timing-hit-marker" class="timing-hit-marker">
+          <div class="timing-hit-icon"></div>
+          <div id="timing-hit-description" class="timing-hit-description"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="js/index.js"></script>
+</body>
+
+</html>
