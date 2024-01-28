@@ -46,13 +46,12 @@ const beatTime = 1 / (bpm / 60);
 const toneDuration = 0.3;
 const frameTime = 1 / 60; // i.e. 60fps
 
-// note: actual time between beeps must be between 6.02-6.1.
-// got a-item when over by 261ms
-// const idolTimeSeconds = 5.8; // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
-
-const bItemSeconds = 3.43; // 🔉🛑🛑🛑|🛑🛑🛑🛑|🅰️
-const idolTimeSeconds = 6.06;
-// const idolTimeSeconds = beatTime * 4;
+const timingOptions = [
+    { name: 'B Item', timingSeconds: 3.43 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🅰️
+    // It seems like actual time between beeps must be between 6.02-6.1.
+    { name: 'Idol / Hat / Berzerker', timingSeconds: 6.06 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
+];
+let selectedTiming = timingOptions[0];
 
 function ready() {
     const button = document.getElementById('start-stop-button')!;
@@ -62,15 +61,43 @@ function ready() {
         .addEventListener('click', onBeep);
 
     timingCursor = document.getElementById('timing-cursor') as HTMLDivElement;
+
     timingHitMarker = document.getElementById('timing-hit-marker') as HTMLDivElement;
+    timingHitMarker.style.left = `${-timingHitMarker.clientWidth / 2}px`;
+
     timingHitDescription = document.getElementById('timing-hit-description') as HTMLDivElement;
     timingLeadUpInners = [...document.querySelectorAll<HTMLDivElement>('.timing-lead-up-inner')];
-    timingTargetInner = document.getElementById('timing-target-inner') as HTMLDivElement;;
+    timingTargetInner = document.getElementById('timing-target-inner') as HTMLDivElement;
+    adjustTimingMarkers();
+    
+    const selectManips = document.getElementById('select-manips') as HTMLSelectElement;
+    for (const option of timingOptions) {
+        selectManips.options.add(new Option(option.name));
+    }
+    selectManips.addEventListener('change', onTimingSelected);
 
+    canvas = document.getElementById('frequency-graph') as HTMLCanvasElement;
+    canvasCtx = canvas.getContext("2d")!;
+    canvas.setAttribute('width', `${canvasWidth}`);
+    canvas.setAttribute('height', `${canvasHeight}`);
+    canvasCtx.fillStyle = "rgb(200,200,200)";
+    canvasCtx.fillRect(0, 0, canvasWidth, canvasHeight);
+    drawFrequencyGraph(savedFrequencyBytes, 1024);
+}
+
+// TODO: switch between FOUND ITEM and TRADE SHIP
+// - offer different sets of options for each
+// - actual detection for TRADE SHIP events
+// - transition modes between manip'ing the event and manip'ing the item/trade
+function onTimingSelected(ev: Event) {
+    const selectManips = ev.target as HTMLSelectElement;
+    selectedTiming = timingOptions.find(elem => elem.name === selectManips.selectedOptions[0].text)!;
+    adjustTimingMarkers();
+}
+
+function adjustTimingMarkers() {
     const timingMeterWidth = document.querySelector('.timing-meter')!.clientWidth;
-    const beatWidth = timingMeterWidth * beatTime / idolTimeSeconds;
-
-    timingHitMarker.style.left = `${-timingHitMarker.clientWidth / 2}px`;
+    const beatWidth = timingMeterWidth * beatTime / selectedTiming.timingSeconds;
 
     const timingLines = document.querySelectorAll<HTMLElement>('.timing-line');
     timingLines[0].style.right = `${beatWidth * 3 - timingLines[0].clientWidth / 2}px`;
@@ -83,23 +110,6 @@ function ready() {
     timingIcons[1].style.right = `${beatWidth * 2 - timingIcons[1].clientWidth / 2}px`;
     timingIcons[2].style.right = `${beatWidth - timingIcons[2].clientWidth / 2}px`;
     timingIcons[3].style.right = `${-timingIcons[3].clientWidth / 2}px`;
-
-    const selectManips = document.getElementById('select-manips') as HTMLSelectElement;
-    selectManips.options.add(new Option('Idol / Hat / Berzerker'));
-    selectManips.options.add(new Option('B Item'));
-    selectManips.addEventListener('change', onManipSelected);
-
-    canvas = document.getElementById('frequency-graph') as HTMLCanvasElement;
-    canvasCtx = canvas.getContext("2d")!;
-    canvas.setAttribute('width', `${canvasWidth}`);
-    canvas.setAttribute('height', `${canvasHeight}`);
-    canvasCtx.fillStyle = "rgb(200,200,200)";
-    canvasCtx.fillRect(0, 0, canvasWidth, canvasHeight);
-    drawFrequencyGraph(savedFrequencyBytes, 1024);
-}
-
-function onManipSelected() {
-    // adjust the cue time etc
 }
 
 async function startOrStop() {
@@ -153,7 +163,7 @@ function onFrame() {
     }
 
     if (cueState == TimingCueState.CueingSecondTone) {
-        const percentageComplete = (audioContext.currentTime - timingStartAt) / idolTimeSeconds;
+        const percentageComplete = (audioContext.currentTime - timingStartAt) / selectedTiming.timingSeconds;
         const timingMeterWidth = document.querySelector('.timing-meter')!.clientWidth;
         const position = timingMeterWidth * percentageComplete;
         timingCursor.style.width = `${position}px`;
@@ -201,8 +211,8 @@ function transitionCueState(nextState: TimingCueState) {
         timingTargetInner.classList.remove('timing-hit');
     } else if (nextState == TimingCueState.CueingSecondTone) {
         timingStartAt = audioContext.currentTime;
-        pendingAt = timingStartAt + idolTimeSeconds;
-        console.log(`Heard first tone. Scheduling cue sound for ${idolTimeSeconds}s`);
+        pendingAt = timingStartAt + selectedTiming.timingSeconds;
+        console.log(`Heard first tone. Scheduling cue sound for ${selectedTiming.timingSeconds}s`);
     } else if (nextState == TimingCueState.HeardSecondTone) {
         const difference = audioContext.currentTime - pendingAt;
         if (difference < 0) {
