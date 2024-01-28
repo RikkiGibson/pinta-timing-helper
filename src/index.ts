@@ -41,6 +41,7 @@ const frameTime = 1 / 60; // i.e. 60fps
 // got a-item when over by 261ms
 // const idolTimeSeconds = 5.8; // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
 
+const bItemSeconds = 3.43; // 🔉🛑🛑🛑|🛑🛑🛑🛑|🅰️
 const idolTimeSeconds = 6.06;
 // const idolTimeSeconds = beatTime * 4;
 
@@ -74,12 +75,21 @@ function ready() {
     timingIcons[2].style.right = `${beatWidth - timingIcons[2].clientWidth / 2}px`;
     timingIcons[3].style.right = `${-timingIcons[3].clientWidth / 2}px`;
 
+    const selectManips = document.getElementById('select-manips') as HTMLSelectElement;
+    selectManips.options.add(new Option('Idol / Hat / Berzerker'));
+    selectManips.options.add(new Option('B Item'));
+    selectManips.addEventListener('change', onManipSelected);
+
     canvas = document.getElementById('frequency-graph') as HTMLCanvasElement;
     canvasCtx = canvas.getContext("2d")!;
     canvas.setAttribute('width', `${canvasWidth}`);
     canvas.setAttribute('height', `${canvasHeight}`);
     canvasCtx.fillStyle = "rgb(200,200,200)";
     canvasCtx.fillRect(0, 0, canvasWidth, canvasHeight);
+}
+
+function onManipSelected() {
+    // adjust the cue time etc
 }
 
 async function startOrStop() {
