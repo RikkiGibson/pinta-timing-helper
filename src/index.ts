@@ -83,8 +83,6 @@ const itemTimingOptions = [
     {  event: 'foundItem', name: 'Moonberry', timingSeconds: 4.32 }, // TODO fine tune 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
     // TODO for times less than 4 beats in duration, need to be able to use fewer beats
     // perhaps allow specifying when some beat markers need to be hidden for especially short timings
-    // also, perhaps the size of the meter should change when the duration changes,
-    // rather than changing the speed the cursor moves.
     {  event: 'foundItem', name: 'Wind Gem / Eye of Truth', timingSeconds: 1.3 }, // TODO fine tune 🔉🛑🛑🅰️
 ];
 let selectedItemTiming = itemTimingOptions[0];
@@ -132,8 +130,13 @@ function onTimingSelected(ev: Event) {
 }
 
 function adjustTimingMarkers() {
-    const timingMeterWidth = document.querySelector('.timing-meter')!.clientWidth;
-    const beatWidth = timingMeterWidth * beatTime / selectedItemTiming.timingSeconds;
+    const pixelsPerSecond = 82;
+    const width = `${pixelsPerSecond * selectedItemTiming.timingSeconds}px`;
+    const timingMeter = document.querySelector<HTMLDivElement>('.timing-meter')!;
+    timingMeter.style.width = width;
+    const timingIconsRow = document.querySelector<HTMLDivElement>('.timing-icons')!;
+    timingIconsRow.style.width = width;
+    const beatWidth = pixelsPerSecond * beatTime;
 
     const timingLines = document.querySelectorAll<HTMLElement>('.timing-line');
     timingLines[0].style.right = `${beatWidth * 3 - timingLines[0].clientWidth / 2}px`;
