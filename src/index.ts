@@ -237,7 +237,7 @@ function drawFrequencyGraph(dataArray: Uint8Array, frequencyBinCount: number) {
     const sliceWidth = canvasWidth / frequencyBinCount;
     let x = 0;
     for (let i = 0; i < dataArray.length; i++) {
-        const v = dataArray[i] / 128.0; // TODO what does this 128 mean?
+        const v = dataArray[i] / 128.0; // dataArray values are between 0-255. This is a weird way to normalize them to the canvas area but, whatever.
         const y = canvasHeight - (v * canvasHeight / 2);
 
         if (i === 0) {
@@ -250,6 +250,20 @@ function drawFrequencyGraph(dataArray: Uint8Array, frequencyBinCount: number) {
     }
 
     canvasCtx.stroke();
+
+    for (const peak of findPeaks(dataArray)) {
+        const x = peak.index * sliceWidth;
+        const v = peak.amplitude / 128.0;
+        const y = canvasHeight - (v * canvasHeight / 2);
+
+        const size = 5;
+        canvasCtx.fillStyle = "rgb(255,0,0)";
+        canvasCtx.beginPath();
+        canvasCtx.moveTo(x-size, y-size);
+        canvasCtx.lineTo(x+size, y-size);
+        canvasCtx.lineTo(x, y);
+        canvasCtx.fill();
+    }
 }
 
 function detectTone(): boolean {
@@ -278,6 +292,24 @@ function detectTone(): boolean {
     }
 
     return false;
+}
+
+interface Peak { index: number, amplitude: number };
+function findPeaks(frequencyData: Uint8Array, threshold = 100): Peak[] {
+    const peaks = [];
+    for (let i = 1; i < frequencyData.length - 1; i++) {
+        const current = frequencyData[i];
+        const previous = frequencyData[i-1];
+        const next = frequencyData[i+1];
+        if (current < threshold || current < previous || current < next) {
+            continue;
+        }
+        
+        // todo: make sure most recent peak is not too close to this one.
+        // if it's within.. I dunno, 3 or 5 elements, then take the larger one
+        peaks.push({ index: i, amplitude: current });
+    }
+    return peaks;
 }
 
 function onBeep() {
