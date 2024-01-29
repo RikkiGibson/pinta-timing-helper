@@ -37,19 +37,36 @@ let timingHitDescription: HTMLDivElement;
 let timingLeadUpInners: HTMLDivElement[];
 let timingTargetInner: HTMLDivElement;
 
-const canvasWidth = 400;
-const canvasHeight = 200;
+const canvasWidth = 200;
+const canvasHeight = 140;
 
 const foundItemFrequency = 230; // why did this change from 210?
+// TODO use/adjust the fingerprint in order to reliably detect the found item beep
+// TODO additional fingerprint for trade ship, offer assistance for trade ship generally
+const foundItemFingerprint = [
+    { index: 68, amplitude: 115 },
+    { index: 127, amplitude: 142 },
+    { index: 228, amplitude: 167 },
+    { index: 279, amplitude: 134 },
+    { index: 330, amplitude: 101 }
+];
+
 const bpm = 138;
 const beatTime = 1 / (bpm / 60);
 const toneDuration = 0.3;
 const frameTime = 1 / 60; // i.e. 60fps
 
+// TODO would like if the checklist were included directly in this tool.
+// Maybe timing selection would be next to the relevant checklist items.
+// e.g. maybe you need 3B->4B trades. Let's keep Found B Item next to that.
 const timingOptions = [
     { name: 'B Item', timingSeconds: 3.43 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🅰️
     // It seems like actual time between beeps must be between 6.02-6.1.
     { name: 'Idol / Hat / Berzerker', timingSeconds: 6.06 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
+    { name: 'Moonberry', timingSeconds: 4.32 }, // TODO fine tune 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
+    // TODO for times less than 4 beats in duration, need to be able to use fewer beats
+    // perhaps allow specifying when some beat markers need to be hidden for especially short timings
+    { name: 'Wind Gem / Eye of Truth', timingSeconds: 6.06 }, // TODO fine tune 🔉🛑🛑🅰️
 ];
 let selectedTiming = timingOptions[0];
 
@@ -304,9 +321,16 @@ function findPeaks(frequencyData: Uint8Array, threshold = 100): Peak[] {
         if (current < threshold || current < previous || current < next) {
             continue;
         }
-        
-        // todo: make sure most recent peak is not too close to this one.
-        // if it's within.. I dunno, 3 or 5 elements, then take the larger one
+
+        const lastPeak = peaks[peaks.length - 1];
+        if (lastPeak && i - lastPeak.index < 3) {
+            // peaks are too close, take whichever of the two is bigger
+            if (lastPeak.amplitude > current) {
+                continue; // drop the current peak
+            } else {
+                peaks.pop(); // drop lastPeak
+            }
+        }
         peaks.push({ index: i, amplitude: current });
     }
     return peaks;
