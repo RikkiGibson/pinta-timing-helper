@@ -1,5 +1,17 @@
 document.addEventListener('DOMContentLoaded', ready);
 
+// TODO: Track and transition between event-mode and item-mode
+// as cues go by.
+// e.g. when a cue times out, move to event mode
+// when event mode cue is hit, move to item mode
+// when item mode cue is hit, move back to event mode
+// perhaps when 3-beeps pattern is heard, move to event mode
+// button/hotkey to switch between them manually as needed
+enum TimingCueMode {
+    Event = "Event", // Found Item, Trade Ship
+    Item = "Item",
+}
+
 enum TimingCueState {
     AwaitingFirstTone = "AwaitingFirstTone",
     CueingSecondTone = "CueingSecondTone",
@@ -13,6 +25,7 @@ enum TimingCueState {
 }
 
 let running = false;
+let cueMode = TimingCueMode.Event;
 let cueState = TimingCueState.AwaitingFirstTone;
 let pendingAt: number;
 let timingStartAt: number;
@@ -56,19 +69,25 @@ const beatTime = 1 / (bpm / 60);
 const toneDuration = 0.3;
 const frameTime = 1 / 60; // i.e. 60fps
 
+const eventTimingOptions = {
+    foundItem: 1.3, // 🔉🔉🔉|🅰️🛑🛑🅱️
+};
+
 // TODO would like if the checklist were included directly in this tool.
 // Maybe timing selection would be next to the relevant checklist items.
 // e.g. maybe you need 3B->4B trades. Let's keep Found B Item next to that.
-const timingOptions = [
-    { name: 'B Item', timingSeconds: 3.43 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🅰️
+const itemTimingOptions = [
+    { event: 'foundItem', name: 'B Item', timingSeconds: 3.43 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🅰️
     // It seems like actual time between beeps must be between 6.02-6.1.
-    { name: 'Idol / Hat / Berzerker', timingSeconds: 6.06 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
-    { name: 'Moonberry', timingSeconds: 4.32 }, // TODO fine tune 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
+    {  event: 'foundItem', name: 'Idol / Hat / Berzerker', timingSeconds: 6.06 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
+    {  event: 'foundItem', name: 'Moonberry', timingSeconds: 4.32 }, // TODO fine tune 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
     // TODO for times less than 4 beats in duration, need to be able to use fewer beats
     // perhaps allow specifying when some beat markers need to be hidden for especially short timings
-    { name: 'Wind Gem / Eye of Truth', timingSeconds: 6.06 }, // TODO fine tune 🔉🛑🛑🅰️
+    // also, perhaps the size of the meter should change when the duration changes,
+    // rather than changing the speed the cursor moves.
+    {  event: 'foundItem', name: 'Wind Gem / Eye of Truth', timingSeconds: 1.3 }, // TODO fine tune 🔉🛑🛑🅰️
 ];
-let selectedTiming = timingOptions[0];
+let selectedItemTiming = itemTimingOptions[0];
 
 function ready() {
     const button = document.getElementById('start-stop-button')!;
@@ -88,7 +107,7 @@ function ready() {
     adjustTimingMarkers();
     
     const selectManips = document.getElementById('select-manips') as HTMLSelectElement;
-    for (const option of timingOptions) {
+    for (const option of itemTimingOptions) {
         selectManips.options.add(new Option(option.name));
     }
     selectManips.addEventListener('change', onTimingSelected);
@@ -108,13 +127,13 @@ function ready() {
 // - transition modes between manip'ing the event and manip'ing the item/trade
 function onTimingSelected(ev: Event) {
     const selectManips = ev.target as HTMLSelectElement;
-    selectedTiming = timingOptions.find(elem => elem.name === selectManips.selectedOptions[0].text)!;
+    selectedItemTiming = itemTimingOptions.find(elem => elem.name === selectManips.selectedOptions[0].text)!;
     adjustTimingMarkers();
 }
 
 function adjustTimingMarkers() {
     const timingMeterWidth = document.querySelector('.timing-meter')!.clientWidth;
-    const beatWidth = timingMeterWidth * beatTime / selectedTiming.timingSeconds;
+    const beatWidth = timingMeterWidth * beatTime / selectedItemTiming.timingSeconds;
 
     const timingLines = document.querySelectorAll<HTMLElement>('.timing-line');
     timingLines[0].style.right = `${beatWidth * 3 - timingLines[0].clientWidth / 2}px`;
@@ -180,7 +199,7 @@ function onFrame() {
     }
 
     if (cueState == TimingCueState.CueingSecondTone) {
-        const percentageComplete = (audioContext.currentTime - timingStartAt) / selectedTiming.timingSeconds;
+        const percentageComplete = (audioContext.currentTime - timingStartAt) / selectedItemTiming.timingSeconds;
         const timingMeterWidth = document.querySelector('.timing-meter')!.clientWidth;
         const position = timingMeterWidth * percentageComplete;
         timingCursor.style.width = `${position}px`;
@@ -228,8 +247,8 @@ function transitionCueState(nextState: TimingCueState) {
         timingTargetInner.classList.remove('timing-hit');
     } else if (nextState == TimingCueState.CueingSecondTone) {
         timingStartAt = audioContext.currentTime;
-        pendingAt = timingStartAt + selectedTiming.timingSeconds;
-        console.log(`Heard first tone. Scheduling cue sound for ${selectedTiming.timingSeconds}s`);
+        pendingAt = timingStartAt + selectedItemTiming.timingSeconds;
+        console.log(`Heard first tone. Scheduling cue sound for ${selectedItemTiming.timingSeconds}s`);
     } else if (nextState == TimingCueState.HeardSecondTone) {
         const difference = audioContext.currentTime - pendingAt;
         if (difference < 0) {
