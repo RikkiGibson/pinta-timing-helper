@@ -36,15 +36,6 @@ let timingStartAt: number;
 let audioContext: AudioContext;
 let analyser: AnalyserNode;
 let dataArray: Uint8Array;
-let savedFrequencyBytes: Uint8Array = new Uint8Array([
-    62,67,65,53,42,47,45,50,45,29,27,42,47,34,20,8,
-    18,21,12,3,1,19,53,72,70,51,49,45,41,39,32,36,35,
-    29,26,31,32,23,21,12,21,21,8,8,13,25,34,42,45,46,
-    45,50,56,58,64,65,71,79,76,74,79,78,84,95,96,92,
-    89,102,115,111,111,102,96,83,74,74,68,69,75,74,
-    71,75,78,72,56,41,38,37,31,30,49,69,72,66,64,59,
-    63,59,55,46,39,28,12,0,0,0,17,32,44,57,56,49,53,56,41,44,48,59,55,50,55,62,67,83,97,118,137,142,132,110,95,85,78,69,55,42,29,33,48,47,36,28,9,0,0,0,6,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,17,26,21,13,0,4,9,14,13,12,48,74,88,91,82,63,49,46,39,26,32,31,27,19,7,0,9,8,12,8,12,10,0,0,0,0,8,26,39,39,38,39,34,31,29,27,24,25,25,33,43,48,49,52,59,67,75,85,98,107,119,138,158,167,164,147,121,109,102,99,96,94,86,81,73,70,64,61,58,63,67,67,59,55,56,57,52,42,71,86,85,74,65,60,59,57,60,56,55,57,60,53,53,56,57,59,66,70,72,76,80,90,111,128,134,124,102,72,61,64,54,32,16,10,7,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,12,29,36,34,60,87,100,101,93,74,50,41,33,22,23,15,8,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,13,18,7,9,11,23,47,64,67,54,31,12,12,0,0,0,4,4,0,0,0,6,5,22,48,63,62,49,29,19,15,12,20,14,0,0,3,4,0,0,0,0,0,2,2,0,0,0,0,0,0,11,12,12,7,4,14,29,37,34,20,3,0,0,0,0,0,0,3,1,0,0,0,0,17,28,33,35,21,14,7,4,7,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,16,35,45,41,22,10,2,2,11,7,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,5,11,10,11,8,0,0,5,13,21,17,6,16,11,0,0,5,7,11,10,17,26,36,44,60,72,73,62,45,31,18,5,2,0,0,0,4,11,0,3,7,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,19,36,48,48,39,25,21,12,4,0,0,0,8,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,16,18,5,0,0,0,0,0,7,5,10,15,12,9,5,0,0,8,15,15,17,24,33,52,69,75,68,53,31,17,8,3,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,18,22,8,0,0,0,0,0,0,0,0,0,0,0,9,22,19,2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,6,18,14,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,4,11,10,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-]);
 
 let canvas: HTMLCanvasElement;
 let canvasCtx: CanvasRenderingContext2D;
@@ -57,15 +48,24 @@ let timingTargetInner: HTMLDivElement;
 const canvasWidth = 200;
 const canvasHeight = 140;
 
+const fftSize = 2048;
+const frequencyBinCount = fftSize / 2;
+
 const foundItemFrequency = 210;
 // TODO use/adjust the fingerprint in order to reliably detect the found item beep
 // TODO additional fingerprint for trade ship, offer assistance for trade ship generally
+
+const closeMenuFingerprint = [
+    { frequency: 5296.875, amplitude: 156 },
+    { frequency: 5648.4375, amplitude: 150 },
+    { frequency: 6000, amplitude: 135 },
+    { frequency: 6351.5625, amplitude: 111 },
+];
+
 const foundItemFingerprint = [
-    { index: 68, amplitude: 115 },
-    { index: 127, amplitude: 142 },
-    { index: 228, amplitude: 167 },
-    { index: 279, amplitude: 134 },
-    { index: 330, amplitude: 101 }
+    { frequency: 4921.875, amplitude: 161 },
+    { frequency: 6000, amplitude: 128 },
+    { frequency: 7101.5625, amplitude: 88 },
 ];
 
 const bpm = 138;
@@ -127,7 +127,6 @@ function ready() {
     canvas.setAttribute('height', `${canvasHeight}`);
     canvasCtx.fillStyle = "rgb(200,200,200)";
     canvasCtx.fillRect(0, 0, canvasWidth, canvasHeight);
-    drawFrequencyGraph(savedFrequencyBytes, 1024);
 }
 
 // TODO: switch between FOUND ITEM and TRADE SHIP
@@ -173,7 +172,6 @@ async function startOrStop() {
     running = true;
     if (!audioContext) audioContext = new AudioContext();
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
     const mediaSource = audioContext.createMediaStreamSource(stream);
 
     analyser = audioContext.createAnalyser();
@@ -285,7 +283,7 @@ function drawFrequencyGraph(dataArray: Uint8Array, frequencyBinCount: number) {
 
     canvasCtx.stroke();
 
-    for (const peak of findPeaks(dataArray)) {
+    for (const peak of findPeaks(dataArray, 80)) {
         const x = peak.index * sliceWidth;
         const v = peak.amplitude / 128.0;
         const y = canvasHeight - (v * canvasHeight / 2);
@@ -300,49 +298,121 @@ function drawFrequencyGraph(dataArray: Uint8Array, frequencyBinCount: number) {
     }
 }
 
-function detectTone(): boolean {
-    findPeaks(dataArray);
+function getFrequency(index: number): number {
+    return getSampleRate() / 2 * index / frequencyBinCount;
+}
 
-    let maxFrequency = 0;
+function getIndex(frequency: number): number {
+    return frequency * frequencyBinCount * 2 / getSampleRate();
+}
+
+function getSampleRate(): number {
+    return audioContext?.sampleRate ?? 48000;
+}
+
+// debugging
+// let savedPeaks: { peaks: Peak[], dataArray: Uint8Array }[] = [];
+
+function detectTone(): boolean {
+    let maxIndex = 0;
     let maxAmplitude = 0;
 
     for (let i = 0; i < dataArray.length; i++) {
         if (dataArray[i] > maxAmplitude) {
-            maxFrequency = i;
+            maxIndex = i;
             maxAmplitude = dataArray[i];
         }
     }
 
-    if (maxFrequency > 0 && maxAmplitude > 100) {
-        console.log(`Max frequency: ${maxFrequency} (${audioContext.sampleRate / 2 * maxFrequency / dataArray.length} Hz). Amplitude: ${maxAmplitude}`);
+    // debugging
+    // if (maxIndex > 0 && maxAmplitude > 80) {
+    //     console.log(`Max frequency: ${maxIndex} (${getFrequency(maxIndex)} Hz). Amplitude: ${maxAmplitude}`);
+    //     savedPeaks.push({ peaks: findPeaks(dataArray), dataArray: dataArray.slice() });
+    // }
+
+    const peaks = findPeaks(dataArray);
+    for (let i = 0; i <= foundItemFingerprint.length; i++)
+    {
+        const currentKnownPeak = i == foundItemFingerprint.length ? null : foundItemFingerprint[i];
+        const previousKnownPeak = i == 0 ? null : foundItemFingerprint[i-1];
+        const largerKnownPeak = !previousKnownPeak ? currentKnownPeak! :
+            !currentKnownPeak ? previousKnownPeak! :
+            // TODO: what if the amplitudes of the "previous matching" and "current matching" peaks do not meet this relation?
+            // Should we say the signal is not a match in that case?
+            previousKnownPeak.amplitude > currentKnownPeak.amplitude
+                ? previousKnownPeak
+                : currentKnownPeak;
+        /**
+          k--------
+          |   u        u
+          |   |     ---|----k
+          |   |    k   |    |
+          |   |    |   |    |
+          |   |    |   |    |
+          k = "known peak" in signal, matching a fingerprint peak
+          u = "unknown peak" in signal, not matching a fingerprint peak
+          in the above, the first 'u' is good, the second 'u' is bad.
+
+          All peaks in the incoming signal must meet the following:
+          find the nearest "known peak" in the fingerprint which is lower in frequency kl, and the nearest which is higher in frequency kh
+          take the higher of these two "known peaks". call it "largerKnownPeak".
+          if no known peak exists with lower frequency, then treat the higher-frequency peak as larger, and same with if no known peak with higher frequency exists, take the lower-frequency peak as larger.
+          for each unknown peak u, where kl.frequency < u < kh.frequency,
+          largerKnownPeak.amplitude must be > than u.amplitude.
+        */
+
+        const frequencyTolerance = 2 * getSampleRate() / frequencyBinCount;
+        // TODO: when multiple peaks lie within 'frequencyTolerance', we need to pick the closest match
+        // reduce?
+        const currentMatchingPeak = peaks.find(peak => Math.abs(peak.frequency - (currentKnownPeak ?? previousKnownPeak!).frequency) < frequencyTolerance);
+        if (!currentMatchingPeak) {
+            // this signal doesn't have a peak which matches a known peak.
+            return false;
+        }
+
+        const largerMatchingPeak = peaks.find(peak => Math.abs(peak.frequency - largerKnownPeak.frequency) < frequencyTolerance);
+        if (!largerMatchingPeak) {
+            // this signal doesn't have a peak which matches a known peak.
+            return false;
+        }
+
+        // we should be able to determine this by:
+        // -for each known peak k, scan and see the previous known peak, or nothing, thus determining a frequency range in the input signal to scan, and a largestKnownPeak
+        // -for each input frequency in this range, scan the amplitudes to ensure that all are smaller than largestKnownPeak.amplitude.
+        const endIndex = getIndex(currentKnownPeak?.frequency ?? (getSampleRate() / 2));
+        for (let j = getIndex(previousKnownPeak?.frequency ?? 0); j < endIndex; j++) {
+            if (largerMatchingPeak.amplitude < dataArray[j]) {
+                /**
+                    u
+                ----|----k
+                k   |    |
+                |   |    |
+                |   |    |
+                Input signal has a peak between known peaks which is larger than amplitude of known peaks.
+                This signal doesn't match the fingerprint.
+                */
+                return false;
+            }
+        }
     }
 
-    // TODO: more robust method of signal identification? compare response from different mics?
-    // 1. find all "significant enough" peaks.
-    // 2. record this into some data structure.
-    // 3. when a signal comes in, search again for its peaks, and fingerprint them against the target.
-    // 4. allow incoming peaks to vary from the target, perhaps more tolerant if all the peaks have shifted a similar amount.
-    if (Math.abs(maxFrequency - foundItemFrequency) <= 2 && maxAmplitude > 80) {
-        savedFrequencyBytes = dataArray.slice();
-        return true;
-    }
-
-    return false;
+    return true;
 }
 
-interface Peak { index: number, amplitude: number };
-function findPeaks(frequencyData: Uint8Array, threshold = 100): Peak[] {
-    const peaks = [];
+interface Peak { frequency: number, index: number, amplitude: number };
+function findPeaks(frequencyData: Uint8Array, threshold?: number): Peak[] {
+    
+    const peaks: Peak[] = [];
     for (let i = 1; i < frequencyData.length - 1; i++) {
         const current = frequencyData[i];
         const previous = frequencyData[i-1];
         const next = frequencyData[i+1];
-        if (current < threshold || current < previous || current < next) {
+        if ((threshold != null && current < threshold) || current < previous || current < next) {
             continue;
         }
 
         const lastPeak = peaks[peaks.length - 1];
-        if (lastPeak && i - lastPeak.index < 3) {
+        if (lastPeak && i - lastPeak.index < 2) {
             // peaks are too close, take whichever of the two is bigger
             if (lastPeak.amplitude > current) {
                 continue; // drop the current peak
@@ -350,7 +420,7 @@ function findPeaks(frequencyData: Uint8Array, threshold = 100): Peak[] {
                 peaks.pop(); // drop lastPeak
             }
         }
-        peaks.push({ index: i, amplitude: current });
+        peaks.push({ frequency: getFrequency(i), index: i, amplitude: current });
     }
     return peaks;
 }
@@ -367,6 +437,20 @@ function onBeep() {
         transitionCueState(TimingCueState.HeardSecondTone);
         return;
     }
+}
+
+
+function analyzeTone() {
+    const oscillator = audioContext.createOscillator();
+    oscillator.type = 'square';
+    oscillator.frequency.value = 536;
+    
+    const gain = audioContext.createGain();
+    gain.gain.value = 0.1;
+    oscillator.connect(gain);
+    gain.connect(analyser);
+    gain.connect(audioContext.destination);
+    oscillator.start();
 }
 
 function beep(when: number, frequency: number) {
