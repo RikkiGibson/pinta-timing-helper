@@ -7,6 +7,10 @@ document.addEventListener('DOMContentLoaded', ready);
 // when item mode cue is hit, move back to event mode
 // perhaps when 3-beeps pattern is heard, move to event mode
 // button/hotkey to switch between them manually as needed
+//
+// Does the exact timing for the event need to carry thru to the item timing?
+// e.g. if you are a frame "late" but within the Found Item event window, your item timing window is shifted over a frame.
+// Timing tune-ups are probably not going to be "meaningful" till we account for this.
 enum TimingCueMode {
     Event = "Event", // Found Item, Trade Ship
     Item = "Item",
@@ -53,7 +57,7 @@ let timingTargetInner: HTMLDivElement;
 const canvasWidth = 200;
 const canvasHeight = 140;
 
-const foundItemFrequency = 230; // why did this change from 210?
+const foundItemFrequency = 210;
 // TODO use/adjust the fingerprint in order to reliably detect the found item beep
 // TODO additional fingerprint for trade ship, offer assistance for trade ship generally
 const foundItemFingerprint = [
@@ -78,12 +82,19 @@ const eventTimingOptions = {
 // e.g. maybe you need 3B->4B trades. Let's keep Found B Item next to that.
 const itemTimingOptions = [
     { event: 'foundItem', name: 'B Item', timingSeconds: 3.43 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🅰️
+
     // It seems like actual time between beeps must be between 6.02-6.1.
-    {  event: 'foundItem', name: 'Idol / Hat / Berzerker', timingSeconds: 6.06 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
-    {  event: 'foundItem', name: 'Moonberry', timingSeconds: 4.32 }, // TODO fine tune 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
-    // TODO for times less than 4 beats in duration, need to be able to use fewer beats
+    // Got with 6.06+41~ms
+    // TODO: missed this with 6.11+0ms. what's going on?
+    // got with -8ms and an earlier find item event manip. it must be having an effect.
+    {  event: 'foundItem', name: 'Idol / Hat / Berzerker', timingSeconds: 6.11 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
+
+    // Got with 4.32+(128 to 172)ms
+    {  event: 'foundItem', name: 'Moonberry', timingSeconds: 4.47 }, // TODO fine tune 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
+
+    // Got with 1.3+100-140ish ms
     // perhaps allow specifying when some beat markers need to be hidden for especially short timings
-    {  event: 'foundItem', name: 'Wind Gem / Eye of Truth', timingSeconds: 1.3 }, // TODO fine tune 🔉🛑🛑🅰️
+    {  event: 'foundItem', name: 'Wind Gem / Eye of Truth', timingSeconds: 1.45 }, // TODO fine tune 🔉🛑🛑🅰️
 ];
 let selectedItemTiming = itemTimingOptions[0];
 
@@ -207,22 +218,6 @@ function onFrame() {
         const position = timingMeterWidth * percentageComplete;
         timingCursor.style.width = `${position}px`;
         timingHitMarker.style.left = `${position - timingHitMarker.clientWidth / 2}px`;
-
-        if (Math.abs((pendingAt - beatTime * 3) - audioContext.currentTime) <= frameTime) {
-            timingLeadUpInners[0].classList.add('timing-hit');
-        }
-
-        if (Math.abs((pendingAt - beatTime * 2) - audioContext.currentTime) <= frameTime) {
-            timingLeadUpInners[1].classList.add('timing-hit');
-        }
-
-        if (Math.abs((pendingAt - beatTime * 1) - audioContext.currentTime) <= frameTime) {
-            timingLeadUpInners[2].classList.add('timing-hit');
-        }
-
-        if (Math.abs(pendingAt - audioContext.currentTime) <= frameTime) {
-            timingTargetInner.classList.add('timing-hit');
-        }
     }
 
     // TODO: detect startup "3-beeps". add "rolling cues" for found item and trade ship.
@@ -306,6 +301,8 @@ function drawFrequencyGraph(dataArray: Uint8Array, frequencyBinCount: number) {
 }
 
 function detectTone(): boolean {
+    findPeaks(dataArray);
+
     let maxFrequency = 0;
     let maxAmplitude = 0;
 
