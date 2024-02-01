@@ -381,7 +381,10 @@ function detectTone(): boolean {
         // -for each input frequency in this range, scan the amplitudes to ensure that all are smaller than largestKnownPeak.amplitude.
         const endIndex = getIndex(currentKnownPeak?.frequency ?? (getSampleRate() / 2));
         for (let j = getIndex(previousKnownPeak?.frequency ?? 0); j < endIndex; j++) {
-            if (largerMatchingPeak.amplitude < dataArray[j]) {
+            // TODO: it's quite possible that we need more known peaks in the fingerprint
+            // and to allow a match when simply *enough* of the peaks are matched.
+            // for now, I'm permitting unknown peaks to slightly exceed known ones.
+            if ((largerMatchingPeak.amplitude + 10) < dataArray[j]) {
                 /**
                     u
                 ----|----k
