@@ -120,22 +120,3 @@ body {
     height: 20px;
     width: 0px;
 }
-
-.animated {
-    /* animation-duration: 3s; */
-    animation-name: progress;
-    /* animation-iteration-count: infinite; */
-    /* animation-direction: alternate; */
-    animation-fill-mode: forwards;
-    animation-timing-function: linear;
-}
-
-@keyframes progress {
-    from {
-        width: 0;
-    }
-
-    to {
-        width: 100%;
-    }
-}
