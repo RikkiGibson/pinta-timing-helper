@@ -31,8 +31,12 @@ enum TimingCueState {
 let running = false;
 let cueMode = TimingCueMode.Event;
 let cueState = TimingCueState.AwaitingFirstTone;
+
 let pendingAt: number;
 let timingStartAt: number;
+let startTimeDelta = 0;
+
+
 let audioContext: AudioContext;
 let analyser: AnalyserNode;
 let dataArray: Uint8Array;
@@ -59,8 +63,6 @@ const fftSize = 2048;
 const frequencyBinCount = fftSize / 2;
 
 const foundItemFrequency = 210;
-// TODO use/adjust the fingerprint in order to reliably detect the found item beep
-// TODO additional fingerprint for trade ship, offer assistance for trade ship generally
 
 const closeMenuFingerprint = [
     { frequency: 5296.875, amplitude: 156 },
@@ -91,11 +93,7 @@ const eventTimingOptions = {
 const itemTimingOptions: { event: 'foundItem' | 'tradeShip', name: string, timingSeconds: number }[] = [
     { event: 'foundItem', name: 'B Item', timingSeconds: 3.43 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🅰️
 
-    // It seems like actual time between beeps must be between 6.02-6.1.
-    // Got with 6.06+41~ms
-    // TODO: missed this with 6.11+0ms. what's going on?
-    // got with -8ms and an earlier find item event manip. it must be having an effect.
-    {  event: 'foundItem', name: 'Idol / Hat / Berzerker', timingSeconds: 6.11 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
+    {  event: 'foundItem', name: 'Idol / Hat / Berzerker', timingSeconds: 6.06 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
 
     // Got with 4.32+(128 to 172)ms
     {  event: 'foundItem', name: 'Moonberry', timingSeconds: 4.47 }, // TODO fine tune 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
@@ -262,7 +260,6 @@ function onFrame() {
         timingHitMarker.style.left = `${position - timingHitMarker.clientWidth / 2}px`;
     }
 
-    // TODO: detect startup "3-beeps". add "rolling cues" for found item and trade ship.
     if (detectTone()) {
         onBeep();
     }
@@ -297,18 +294,21 @@ function transitionCueState(nextState: TimingCueState) {
             cueMode = TimingCueMode.Event;
         }
     } else if (nextState == TimingCueState.CueingSecondTone) {
-        timingStartAt = audioContext.currentTime;
+        timingStartAt = audioContext.currentTime - startTimeDelta;
         const currentTimingSeconds = getCurrentTimingSeconds();
         pendingAt = timingStartAt + currentTimingSeconds;
         console.log(`Heard first tone. Scheduling cue sound for ${currentTimingSeconds}s`);
     } else if (nextState == TimingCueState.HeardSecondTone) {
         const difference = audioContext.currentTime - pendingAt;
-        if (difference < 0) {
-            console.log(`Second tone was early by ${Math.trunc(difference*-1000)}ms`);
-        } else if (difference > 0) {
-            console.log(`Second tone was late by ${Math.trunc(difference*1000)}ms`);
+        if (cueMode == TimingCueMode.Event) {
+            // carry the difference on the event timing thru to the found item timing
+            // todo: hit-marker should be shifted over before beep to indicate this
+            // todo: when the timing is way off (more than 1s?) just drop the delta
+            // possibly don't even move to item timing, user is probably resetting
+            startTimeDelta = difference;
         } else {
-            console.log(`Second tone was exactly on time..how did you do that?`);
+            // don't carry the difference on item timing thru to event timing
+            startTimeDelta = 0;
         }
         timingHitDescription.innerText = `${difference < 0 ? '-' : '+'}${Math.trunc(Math.abs(difference*1000))}ms`;
     }
@@ -422,8 +422,8 @@ function detectTone(): boolean {
         */
 
         const frequencyTolerance = 2 * getSampleRate() / frequencyBinCount;
-        // TODO: when multiple peaks lie within 'frequencyTolerance', we need to pick the closest match
-        // reduce?
+        // TODO: when multiple peaks lie within 'frequencyTolerance', we need to pick the closest match. reduce?
+        // Perhaps this is making recognition fail in some cases--we are not picking the best peak matching the fingerprint.
         const currentMatchingPeak = peaks.find(peak => Math.abs(peak.frequency - (currentKnownPeak ?? previousKnownPeak!).frequency) < frequencyTolerance);
         if (!currentMatchingPeak) {
             // this signal doesn't have a peak which matches a known peak.
