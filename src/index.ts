@@ -39,11 +39,18 @@ let dataArray: Uint8Array;
 
 let canvas: HTMLCanvasElement;
 let canvasCtx: CanvasRenderingContext2D;
-let timingCursor: HTMLDivElement;
-let timingHitMarker: HTMLDivElement;
-let timingHitDescription: HTMLDivElement;
-let timingLeadUpInners: HTMLDivElement[];
-let timingTargetInner: HTMLDivElement;
+
+interface TimingVisualizerDynamicElements {
+    timingMeter: HTMLDivElement;
+    timingCursor: HTMLDivElement;
+    timingHitMarker: HTMLDivElement;
+    timingHitDescription: HTMLDivElement;
+    timingLeadUpInners: HTMLDivElement[];
+    timingTargetInner: HTMLDivElement;
+}
+
+let eventTimingElements: TimingVisualizerDynamicElements;
+let itemTimingElements: TimingVisualizerDynamicElements;
 
 const canvasWidth = 200;
 const canvasHeight = 140;
@@ -75,12 +82,13 @@ const frameTime = 1 / 60; // i.e. 60fps
 
 const eventTimingOptions = {
     foundItem: 1.3, // 🔉🔉🔉|🅰️🛑🛑🅱️
+    tradeShip: 2.1, // 🔉🔉🔉|🅰️🛑🛑🛑|🛑🅱️
 };
 
 // TODO would like if the checklist were included directly in this tool.
 // Maybe timing selection would be next to the relevant checklist items.
 // e.g. maybe you need 3B->4B trades. Let's keep Found B Item next to that.
-const itemTimingOptions = [
+const itemTimingOptions: { event: 'foundItem' | 'tradeShip', name: string, timingSeconds: number }[] = [
     { event: 'foundItem', name: 'B Item', timingSeconds: 3.43 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🅰️
 
     // It seems like actual time between beeps must be between 6.02-6.1.
@@ -98,6 +106,11 @@ const itemTimingOptions = [
 ];
 let selectedItemTiming = itemTimingOptions[0];
 
+function getCurrentTimingSeconds() {
+    // TODO: maybe simpler to just keep copies of the event timing in each of these options?
+    return cueMode == TimingCueMode.Event ? eventTimingOptions[selectedItemTiming.event] : selectedItemTiming.timingSeconds;
+}
+
 function ready() {
     const button = document.getElementById('start-stop-button')!;
     button.addEventListener('click', startOrStop);
@@ -105,16 +118,11 @@ function ready() {
     document.getElementById('beep-button')!
         .addEventListener('click', onBeep);
 
-    timingCursor = document.getElementById('timing-cursor') as HTMLDivElement;
-
-    timingHitMarker = document.getElementById('timing-hit-marker') as HTMLDivElement;
-    timingHitMarker.style.left = `${-timingHitMarker.clientWidth / 2}px`;
-
-    timingHitDescription = document.getElementById('timing-hit-description') as HTMLDivElement;
-    timingLeadUpInners = [...document.querySelectorAll<HTMLDivElement>('.timing-lead-up-inner')];
-    timingTargetInner = document.getElementById('timing-target-inner') as HTMLDivElement;
+    eventTimingElements = getTimingVisualizerElements(document.getElementById('event-timing-visualizer')!);
+    itemTimingElements = getTimingVisualizerElements(document.getElementById('item-timing-visualizer')!);
     adjustTimingMarkers();
-    
+    itemTimingElements.timingHitMarker.classList.add('hidden');
+
     const selectManips = document.getElementById('select-manips') as HTMLSelectElement;
     for (const option of itemTimingOptions) {
         selectManips.options.add(new Option(option.name));
@@ -127,6 +135,27 @@ function ready() {
     canvas.setAttribute('height', `${canvasHeight}`);
     canvasCtx.fillStyle = "rgb(200,200,200)";
     canvasCtx.fillRect(0, 0, canvasWidth, canvasHeight);
+
+    function getTimingVisualizerElements(timingVisualizer: HTMLElement): TimingVisualizerDynamicElements {
+        const timingMeter = timingVisualizer.querySelector('.timing-meter') as HTMLDivElement;
+        const timingCursor = timingVisualizer.querySelector('.timing-cursor') as HTMLDivElement;
+
+        const timingHitMarker = timingVisualizer.querySelector('.timing-hit-marker') as HTMLDivElement;
+        timingHitMarker.style.left = `${-timingHitMarker.clientWidth / 2}px`;
+
+        const timingHitDescription = timingVisualizer.querySelector('.timing-hit-description') as HTMLDivElement;
+        const timingLeadUpInners = [...timingVisualizer.querySelectorAll<HTMLDivElement>('.timing-lead-up-inner')];
+        const timingTargetInner = timingVisualizer.querySelector('.timing-target-inner') as HTMLDivElement;
+
+        return {
+            timingMeter,
+            timingCursor,
+            timingHitDescription,
+            timingHitMarker,
+            timingLeadUpInners,
+            timingTargetInner
+        };
+    }
 }
 
 // TODO: switch between FOUND ITEM and TRADE SHIP
@@ -141,24 +170,37 @@ function onTimingSelected(ev: Event) {
 
 function adjustTimingMarkers() {
     const pixelsPerSecond = 82;
-    const width = `${pixelsPerSecond * selectedItemTiming.timingSeconds}px`;
-    const timingMeter = document.querySelector<HTMLDivElement>('.timing-meter')!;
-    timingMeter.style.width = width;
-    const timingIconsRow = document.querySelector<HTMLDivElement>('.timing-icons')!;
-    timingIconsRow.style.width = width;
-    const beatWidth = pixelsPerSecond * beatTime;
 
-    const timingLines = document.querySelectorAll<HTMLElement>('.timing-line');
-    timingLines[0].style.right = `${beatWidth * 3 - timingLines[0].clientWidth / 2}px`;
-    timingLines[1].style.right = `${beatWidth * 2 - timingLines[1].clientWidth / 2}px`;
-    timingLines[2].style.right = `${beatWidth - timingLines[2].clientWidth / 2}px`;
-    timingLines[3].style.right = `${-timingLines[3].clientWidth / 2}px`;
+    // event timing
+    adjustTimingMarkers1(
+        eventTimingOptions[selectedItemTiming.event],
+        document.getElementById("event-timing-visualizer")!);
 
-    const timingIcons = document.querySelectorAll<HTMLElement>('.timing-icon');
-    timingIcons[0].style.right = `${beatWidth * 3 - timingIcons[0].clientWidth / 2}px`;
-    timingIcons[1].style.right = `${beatWidth * 2 - timingIcons[1].clientWidth / 2}px`;
-    timingIcons[2].style.right = `${beatWidth - timingIcons[2].clientWidth / 2}px`;
-    timingIcons[3].style.right = `${-timingIcons[3].clientWidth / 2}px`;
+    // item timing
+    adjustTimingMarkers1(
+        selectedItemTiming.timingSeconds,
+        document.getElementById("item-timing-visualizer")!);
+
+    function adjustTimingMarkers1(timingSeconds: number, timingVisualizer: HTMLElement) {
+        const width = `${pixelsPerSecond * timingSeconds}px`;
+        const timingMeter = timingVisualizer.querySelector<HTMLDivElement>('.timing-meter')!;
+        timingMeter.style.width = width;
+        const timingIconsRow = timingVisualizer.querySelector<HTMLDivElement>('.timing-icons')!;
+        timingIconsRow.style.width = width;
+        const beatWidth = pixelsPerSecond * beatTime;
+
+        const timingLines = timingVisualizer.querySelectorAll<HTMLElement>('.timing-line');
+        timingLines[0].style.right = `${beatWidth * 3 - timingLines[0].clientWidth / 2}px`;
+        timingLines[1].style.right = `${beatWidth * 2 - timingLines[1].clientWidth / 2}px`;
+        timingLines[2].style.right = `${beatWidth - timingLines[2].clientWidth / 2}px`;
+        timingLines[3].style.right = `${-timingLines[3].clientWidth / 2}px`;
+
+        const timingIcons = timingVisualizer.querySelectorAll<HTMLElement>('.timing-icon');
+        timingIcons[0].style.right = `${beatWidth * 3 - timingIcons[0].clientWidth / 2}px`;
+        timingIcons[1].style.right = `${beatWidth * 2 - timingIcons[1].clientWidth / 2}px`;
+        timingIcons[2].style.right = `${beatWidth - timingIcons[2].clientWidth / 2}px`;
+        timingIcons[3].style.right = `${-timingIcons[3].clientWidth / 2}px`;
+    }
 }
 
 async function startOrStop() {
@@ -192,6 +234,8 @@ function onFrame() {
     analyser.getByteFrequencyData(dataArray);
     drawFrequencyGraph(dataArray, analyser.frequencyBinCount);
 
+    const { timingMeter, timingLeadUpInners, timingTargetInner, timingCursor, timingHitMarker } =
+        cueMode == TimingCueMode.Event ? eventTimingElements : itemTimingElements;
     if (cueState == TimingCueState.CueingSecondTone || cueState == TimingCueState.HeardSecondTone) {
         if (Math.abs((pendingAt - beatTime * 3) - audioContext.currentTime) <= frameTime) {
             timingLeadUpInners[0].classList.add('timing-hit');
@@ -211,8 +255,8 @@ function onFrame() {
     }
 
     if (cueState == TimingCueState.CueingSecondTone) {
-        const percentageComplete = (audioContext.currentTime - timingStartAt) / selectedItemTiming.timingSeconds;
-        const timingMeterWidth = document.querySelector('.timing-meter')!.clientWidth;
+        const percentageComplete = (audioContext.currentTime - timingStartAt) / getCurrentTimingSeconds();
+        const timingMeterWidth = timingMeter.clientWidth;
         const position = timingMeterWidth * percentageComplete;
         timingCursor.style.width = `${position}px`;
         timingHitMarker.style.left = `${position - timingHitMarker.clientWidth / 2}px`;
@@ -235,16 +279,28 @@ function onFrame() {
 }
 
 function transitionCueState(nextState: TimingCueState) {
+    const { timingLeadUpInners, timingTargetInner, timingCursor, timingHitMarker, timingHitDescription } =
+        cueMode == TimingCueMode.Event ? eventTimingElements : itemTimingElements;
     if (nextState == TimingCueState.AwaitingFirstTone) {
         timingCursor.style.width = '0';
         timingHitDescription.innerText = '';
         timingHitMarker.style.left = `${-timingHitMarker.clientWidth / 2}px`;
         timingLeadUpInners.forEach((elem) => elem.classList.remove('timing-hit'));
         timingTargetInner.classList.remove('timing-hit');
+        if (cueMode == TimingCueMode.Event) {
+            timingHitMarker.classList.add('hidden');
+            itemTimingElements.timingHitMarker.classList.remove('hidden');
+            cueMode = TimingCueMode.Item;
+        } else {
+            timingHitMarker.classList.add('hidden');
+            eventTimingElements.timingHitMarker.classList.remove('hidden');
+            cueMode = TimingCueMode.Event;
+        }
     } else if (nextState == TimingCueState.CueingSecondTone) {
         timingStartAt = audioContext.currentTime;
-        pendingAt = timingStartAt + selectedItemTiming.timingSeconds;
-        console.log(`Heard first tone. Scheduling cue sound for ${selectedItemTiming.timingSeconds}s`);
+        const currentTimingSeconds = getCurrentTimingSeconds();
+        pendingAt = timingStartAt + currentTimingSeconds;
+        console.log(`Heard first tone. Scheduling cue sound for ${currentTimingSeconds}s`);
     } else if (nextState == TimingCueState.HeardSecondTone) {
         const difference = audioContext.currentTime - pendingAt;
         if (difference < 0) {
@@ -330,11 +386,15 @@ function detectTone(): boolean {
     //     savedPeaks.push({ peaks: findPeaks(dataArray), dataArray: dataArray.slice() });
     // }
 
+    const fingerprint = cueMode == TimingCueMode.Event && cueState == TimingCueState.CueingSecondTone
+        ? closeMenuFingerprint
+        : foundItemFingerprint;
+
     const peaks = findPeaks(dataArray);
-    for (let i = 0; i <= foundItemFingerprint.length; i++)
+    for (let i = 0; i <= fingerprint.length; i++)
     {
-        const currentKnownPeak = i == foundItemFingerprint.length ? null : foundItemFingerprint[i];
-        const previousKnownPeak = i == 0 ? null : foundItemFingerprint[i-1];
+        const currentKnownPeak = i == fingerprint.length ? null : fingerprint[i];
+        const previousKnownPeak = i == 0 ? null : fingerprint[i-1];
         const largerKnownPeak = !previousKnownPeak ? currentKnownPeak! :
             !currentKnownPeak ? previousKnownPeak! :
             // TODO: what if the amplitudes of the "previous matching" and "current matching" peaks do not meet this relation?
@@ -404,7 +464,7 @@ function detectTone(): boolean {
 
 interface Peak { frequency: number, index: number, amplitude: number };
 function findPeaks(frequencyData: Uint8Array, threshold?: number): Peak[] {
-    
+
     const peaks: Peak[] = [];
     for (let i = 1; i < frequencyData.length - 1; i++) {
         const current = frequencyData[i];
@@ -447,7 +507,7 @@ function analyzeTone() {
     const oscillator = audioContext.createOscillator();
     oscillator.type = 'square';
     oscillator.frequency.value = 536;
-    
+
     const gain = audioContext.createGain();
     gain.gain.value = 0.1;
     oscillator.connect(gain);

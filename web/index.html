@@ -21,10 +21,12 @@
       </div>
       <canvas id="frequency-graph" class="padded"></canvas>
     </div>
-    <div class="column timing-visualizer">
+    <div class="row controls">
+      <select id="select-manips">
+      </select>
+    </div>
+    <div id="event-timing-visualizer" class="column timing-visualizer">
       <div class="row timing-icons">
-        <select id="select-manips">
-        </select>
         <div class="timing-spacer"></div>
         <div class="timing-icon timing-lead-up">
           <div class="timing-lead-up-inner"></div>
@@ -36,7 +38,7 @@
           <div class="timing-lead-up-inner"></div>
         </div>
         <div class="timing-icon timing-target">
-          <div id="timing-target-inner" class="timing-target-inner"></div>
+          <div class="timing-target-inner"></div>
         </div>
       </div>
       <div class="row timing-meter">
@@ -44,13 +46,45 @@
         <div class="timing-line"></div>
         <div class="timing-line"></div>
         <div class="timing-line"></div>
-        <div id="timing-cursor" class="timing-cursor"></div>
+        <div class="timing-cursor"></div>
       </div>
       <div class="row timing-icons">
         <div class="timing-spacer"></div>
-        <div id="timing-hit-marker" class="timing-hit-marker">
+        <div class="timing-hit-marker">
           <div class="timing-hit-icon"></div>
-          <div id="timing-hit-description" class="timing-hit-description"></div>
+          <div class="timing-hit-description"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+    <div id="item-timing-visualizer" class="column timing-visualizer">
+      <div class="row timing-icons">
+        <div class="timing-spacer"></div>
+        <div class="timing-icon timing-lead-up">
+          <div class="timing-lead-up-inner"></div>
+        </div>
+        <div class="timing-icon timing-lead-up">
+          <div class="timing-lead-up-inner"></div>
+        </div>
+        <div class="timing-icon timing-lead-up">
+          <div class="timing-lead-up-inner"></div>
+        </div>
+        <div class="timing-icon timing-target">
+          <div class="timing-target-inner"></div>
+        </div>
+      </div>
+      <div class="row timing-meter">
+        <div class="timing-line"></div>
+        <div class="timing-line"></div>
+        <div class="timing-line"></div>
+        <div class="timing-line"></div>
+        <div class="timing-cursor"></div>
+      </div>
+      <div class="row timing-icons">
+        <div class="timing-spacer"></div>
+        <div class="timing-hit-marker">
+          <div class="timing-hit-icon"></div>
+          <div class="timing-hit-description"></div>
         </div>
       </div>
     </div>

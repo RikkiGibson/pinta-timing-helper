@@ -120,3 +120,7 @@ body {
     height: 20px;
     width: 0px;
 }
+
+.hidden {
+    display: none;
+}
