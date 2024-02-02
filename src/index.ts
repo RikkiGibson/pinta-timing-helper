@@ -77,9 +77,14 @@ const foundItemFingerprint = [
     { frequency: 7101.5625, amplitude: 88 },
 ];
 
+const tradeShipFingerprint = [
+    { frequency: 4875, amplitude: 126 },
+    { frequency: 6070.3125, amplitude: 112 },
+];
+
 const bpm = 138;
 const beatTime = 1 / (bpm / 60);
-const toneDuration = 0.3;
+const toneDuration = 0.35;
 const frameTime = 1 / 60; // i.e. 60fps
 
 const eventTimingOptions = {
@@ -92,15 +97,17 @@ const eventTimingOptions = {
 // e.g. maybe you need 3B->4B trades. Let's keep Found B Item next to that.
 const itemTimingOptions: { event: 'foundItem' | 'tradeShip', name: string, timingSeconds: number }[] = [
     { event: 'foundItem', name: 'B Item', timingSeconds: 3.43 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🅰️
-
+    
     {  event: 'foundItem', name: 'Idol / Hat / Berzerker', timingSeconds: 6.06 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
-
+    
     // Got with 4.32+(128 to 172)ms
     {  event: 'foundItem', name: 'Moonberry', timingSeconds: 4.47 }, // TODO fine tune 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
-
+    
     // Got with 1.3+100-140ish ms
     // perhaps allow specifying when some beat markers need to be hidden for especially short timings
     {  event: 'foundItem', name: 'Wind Gem / Eye of Truth', timingSeconds: 1.45 }, // TODO fine tune 🔉🛑🛑🅰️
+
+    { event: 'tradeShip', name: '3B->4B', timingSeconds: 2.12 }, // 🔉🛑🛑🛑|🛑🅰️
 ];
 let selectedItemTiming = itemTimingOptions[0];
 
@@ -386,9 +393,12 @@ function detectTone(): boolean {
     //     savedPeaks.push({ peaks: findPeaks(dataArray), dataArray: dataArray.slice() });
     // }
 
-    const fingerprint = cueMode == TimingCueMode.Event && cueState == TimingCueState.CueingSecondTone
+    const fingerprint =
+        cueMode == TimingCueMode.Event && cueState == TimingCueState.CueingSecondTone
         ? closeMenuFingerprint
-        : foundItemFingerprint;
+        : selectedItemTiming.event == "tradeShip" && cueState == TimingCueState.AwaitingFirstTone
+            ? tradeShipFingerprint
+            : foundItemFingerprint;
 
     const peaks = findPeaks(dataArray);
     for (let i = 0; i <= fingerprint.length; i++)
