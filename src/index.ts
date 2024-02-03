@@ -95,24 +95,26 @@ const eventTimingOptions = {
 // TODO would like if the checklist were included directly in this tool.
 // Maybe timing selection would be next to the relevant checklist items.
 // e.g. maybe you need 3B->4B trades. Let's keep Found B Item next to that.
-const itemTimingOptions: { event: 'foundItem' | 'tradeShip', name: string, timingSeconds: number }[] = [
+interface ItemTiming { event: 'foundItem' | 'tradeShip', name: string, timingSeconds: number };
+
+const itemTimingOptionValues: ItemTiming[] = [
     { event: 'foundItem', name: 'B Item', timingSeconds: 3.43 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🅰️
     
-    {  event: 'foundItem', name: 'Idol / Hat / Berzerker', timingSeconds: 6.06 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
+    { event: 'foundItem', name: 'Idol / Hat / Berzerker', timingSeconds: 6.06 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
     
     // Got with 4.32+(128 to 172)ms
-    {  event: 'foundItem', name: 'Moonberry', timingSeconds: 4.47 }, // TODO fine tune 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
+    { event: 'foundItem', name: 'Moonberry', timingSeconds: 4.47 }, // TODO fine tune 4.57 not long enough? 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
     
-    // Got with 1.3+100-140ish ms
     // perhaps allow specifying when some beat markers need to be hidden for especially short timings
-    {  event: 'foundItem', name: 'Wind Gem / Eye of Truth', timingSeconds: 1.45 }, // TODO fine tune 🔉🛑🛑🅰️
+    { event: 'foundItem', name: 'Wind Gem / Eye of Truth', timingSeconds: 1.6 }, // 🔉🛑🛑🅰️
 
-    { event: 'tradeShip', name: '3B->4B', timingSeconds: 2.12 }, // 🔉🛑🛑🛑|🛑🅰️
+    { event: 'tradeShip', name: 'Trade 3B->4B', timingSeconds: 2.14 }, // 🔉🛑🛑🛑|🛑🅰️
+    { event: 'tradeShip', name: 'Trade 3B->1A', timingSeconds: 4.18 }, // 🔉🛑🛑🛑|🛑🅰️ TODO: haven't been able to find this one yet
 ];
-let selectedItemTiming = itemTimingOptions[0];
+
+let selectedItemTiming: ItemTiming;
 
 function getCurrentTimingSeconds() {
-    // TODO: maybe simpler to just keep copies of the event timing in each of these options?
     return cueMode == TimingCueMode.Event ? eventTimingOptions[selectedItemTiming.event] : selectedItemTiming.timingSeconds;
 }
 
@@ -125,14 +127,22 @@ function ready() {
 
     eventTimingElements = getTimingVisualizerElements(document.getElementById('event-timing-visualizer')!);
     itemTimingElements = getTimingVisualizerElements(document.getElementById('item-timing-visualizer')!);
-    adjustTimingMarkers();
     itemTimingElements.timingHitMarker.classList.add('hidden');
 
-    const selectManips = document.getElementById('select-manips') as HTMLSelectElement;
-    for (const option of itemTimingOptions) {
-        selectManips.options.add(new Option(option.name));
+    const itemTimingOptions = document.getElementById('select-manips') as HTMLSelectElement;
+    for (const option of itemTimingOptionValues) {
+        itemTimingOptions.options.add(new Option(option.name));
     }
-    selectManips.addEventListener('change', onTimingSelected);
+    const localStorageSelectedTimingName = localStorage.getItem('selected-timing-name');
+    itemTimingOptions.addEventListener('change', onTimingSelected);
+    if (localStorageSelectedTimingName) {
+        itemTimingOptions.value = localStorageSelectedTimingName;
+        selectedItemTiming = itemTimingOptionValues.find(opt => opt.name === localStorageSelectedTimingName)!;
+    } else {
+        selectedItemTiming = itemTimingOptionValues[0];
+    }
+
+    adjustTimingMarkers();
 
     canvas = document.getElementById('frequency-graph') as HTMLCanvasElement;
     canvasCtx = canvas.getContext("2d")!;
@@ -169,7 +179,8 @@ function ready() {
 // - transition modes between manip'ing the event and manip'ing the item/trade
 function onTimingSelected(ev: Event) {
     const selectManips = ev.target as HTMLSelectElement;
-    selectedItemTiming = itemTimingOptions.find(elem => elem.name === selectManips.selectedOptions[0].text)!;
+    selectedItemTiming = itemTimingOptionValues.find(elem => elem.name === selectManips.selectedOptions[0].text)!;
+    localStorage.setItem('selected-timing-name', selectedItemTiming.name);
     adjustTimingMarkers();
 }
 
@@ -242,19 +253,24 @@ function onFrame() {
     const { timingMeter, timingLeadUpInners, timingTargetInner, timingCursor, timingHitMarker } =
         cueMode == TimingCueMode.Event ? eventTimingElements : itemTimingElements;
     if (cueState == TimingCueState.CueingSecondTone || cueState == TimingCueState.HeardSecondTone) {
-        if (Math.abs((pendingAt - beatTime * 3) - audioContext.currentTime) <= frameTime) {
+        const positionWithinMeasure = (pendingAt - audioContext.currentTime) % (beatTime * 4);
+        if (Math.abs(positionWithinMeasure - beatTime * 3) <= frameTime) {
+            timingTargetInner.classList.remove('timing-hit');
             timingLeadUpInners[0].classList.add('timing-hit');
         }
 
-        if (Math.abs((pendingAt - beatTime * 2) - audioContext.currentTime) <= frameTime) {
+        if (Math.abs(positionWithinMeasure - beatTime * 2) <= frameTime) {
+            timingLeadUpInners[0].classList.remove('timing-hit');
             timingLeadUpInners[1].classList.add('timing-hit');
         }
-
-        if (Math.abs((pendingAt - beatTime * 1) - audioContext.currentTime) <= frameTime) {
+        
+        if (Math.abs(positionWithinMeasure - beatTime * 1) <= frameTime) {
+            timingLeadUpInners[1].classList.remove('timing-hit');
             timingLeadUpInners[2].classList.add('timing-hit');
         }
-
-        if (Math.abs(pendingAt - audioContext.currentTime) <= frameTime) {
+        
+        if (Math.abs(positionWithinMeasure) <= frameTime) {
+            timingLeadUpInners[2].classList.remove('timing-hit');
             timingTargetInner.classList.add('timing-hit');
         }
     }
@@ -277,6 +293,8 @@ function onFrame() {
         }
     }
     else if (cueState == TimingCueState.HeardSecondTone && audioContext.currentTime > pendingAt + 1.0) {
+        // TODO: the trailing A presses tend to unexpectedly push us from event mode to item mode.
+        // how can we prevent that?
         transitionCueState(TimingCueState.AwaitingFirstTone);
         console.log("Cue complete. Ready to hear new tone.");
     }
