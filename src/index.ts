@@ -7,10 +7,6 @@ document.addEventListener('DOMContentLoaded', ready);
 // when item mode cue is hit, move back to event mode
 // perhaps when 3-beeps pattern is heard, move to event mode
 // button/hotkey to switch between them manually as needed
-//
-// Does the exact timing for the event need to carry thru to the item timing?
-// e.g. if you are a frame "late" but within the Found Item event window, your item timing window is shifted over a frame.
-// Timing tune-ups are probably not going to be "meaningful" till we account for this.
 enum TimingCueMode {
     Event = "Event", // Found Item, Trade Ship
     Item = "Item",
@@ -34,7 +30,14 @@ let cueState = TimingCueState.AwaitingFirstTone;
 
 let pendingAt: number;
 let timingStartAt: number;
-let startTimeDelta = 0;
+
+/**
+ * Actual time minus target time that an event manip was hit.
+ * Factored in to the duration of the subsequent item manip.
+ * Positive means the event manip was late and the item manip should be shorter.
+ * Negative means the event manip was early and the item manip should be longer.
+ **/
+let itemManipDelta = 0;
 
 
 let audioContext: AudioContext;
@@ -56,6 +59,9 @@ interface TimingVisualizerDynamicElements {
 let eventTimingElements: TimingVisualizerDynamicElements;
 let itemTimingElements: TimingVisualizerDynamicElements;
 
+/** speed at which the timing cursor moves */
+const pixelsPerSecond = 82;
+
 const canvasWidth = 200;
 const canvasHeight = 140;
 
@@ -64,6 +70,8 @@ const frequencyBinCount = fftSize / 2;
 
 const foundItemFrequency = 210;
 
+// these fingerprints probably need more harmonics in them.
+// sounds like the disk drive and random clicking will set them off.
 const closeMenuFingerprint = [
     { frequency: 5296.875, amplitude: 156 },
     { frequency: 5648.4375, amplitude: 150 },
@@ -99,16 +107,14 @@ interface ItemTiming { event: 'foundItem' | 'tradeShip', name: string, timingSec
 const itemTimingOptionValues: ItemTiming[] = [
     { event: 'foundItem', name: 'B Item', timingSeconds: 3.43 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🅰️
     
-    { event: 'foundItem', name: 'Idol / Hat / Berzerker', timingSeconds: 6.06 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
+    { event: 'foundItem', name: 'Idol / Hat / Berzerker', timingSeconds: 6.1 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
     
-    // Got with 4.32+(128 to 172)ms
-    { event: 'foundItem', name: 'Moonberry', timingSeconds: 4.47 }, // TODO fine tune 4.57 not long enough? 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
+    { event: 'foundItem', name: 'Moonberry', timingSeconds: 4.47 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
     
-    // perhaps allow specifying when some beat markers need to be hidden for especially short timings
     { event: 'foundItem', name: 'Wind Gem / Eye of Truth', timingSeconds: 1.6 }, // 🔉🛑🛑🅰️
 
     { event: 'tradeShip', name: 'Trade 3B->4B', timingSeconds: 2.14 }, // 🔉🛑🛑🛑|🛑🅰️
-    { event: 'tradeShip', name: 'Trade 3B->1A', timingSeconds: 4.18 }, // 🔉🛑🛑🛑|🛑🅰️ TODO: haven't been able to find this one yet
+    { event: 'tradeShip', name: 'Trade 3B->1A', timingSeconds: 4.47 }, // 🔉🛑🛑🛑|🛑🅰️ 4.36 is idol minus one measure. 4.4 is idol minus "almost one measure". 
 ];
 
 let selectedItemTiming: ItemTiming;
@@ -184,8 +190,6 @@ function onTimingSelected(ev: Event) {
 }
 
 function adjustTimingMarkers() {
-    const pixelsPerSecond = 82;
-
     // event timing
     adjustTimingMarkers1(
         eventTimingOptions[selectedItemTiming.event],
@@ -275,7 +279,7 @@ function onFrame() {
     }
 
     if (cueState == TimingCueState.CueingSecondTone) {
-        const percentageComplete = (audioContext.currentTime - timingStartAt) / getCurrentTimingSeconds();
+        const percentageComplete = (itemManipDelta + audioContext.currentTime - timingStartAt) / getCurrentTimingSeconds();
         const timingMeterWidth = timingMeter.clientWidth;
         const position = timingMeterWidth * percentageComplete;
         timingCursor.style.width = `${position}px`;
@@ -311,6 +315,8 @@ function transitionCueState(nextState: TimingCueState) {
         if (cueMode == TimingCueMode.Event) {
             timingHitMarker.classList.add('hidden');
             itemTimingElements.timingHitMarker.classList.remove('hidden');
+            itemTimingElements.timingHitMarker.style.left = `${itemManipDelta * pixelsPerSecond - itemTimingElements.timingHitMarker.clientWidth / 2}px`;
+            itemTimingElements.timingHitDescription.innerText = itemManipDelta == 0 ? '' : `${itemManipDelta < 0 ? '-' : '+'}${Math.trunc(Math.abs(itemManipDelta*1000))}ms`;
             cueMode = TimingCueMode.Item;
         } else {
             timingHitMarker.classList.add('hidden');
@@ -318,9 +324,10 @@ function transitionCueState(nextState: TimingCueState) {
             cueMode = TimingCueMode.Event;
         }
     } else if (nextState == TimingCueState.CueingSecondTone) {
-        timingStartAt = audioContext.currentTime - startTimeDelta;
+        timingHitDescription.innerText = '';
+        timingStartAt = audioContext.currentTime;
         const currentTimingSeconds = getCurrentTimingSeconds();
-        pendingAt = timingStartAt + currentTimingSeconds;
+        pendingAt = timingStartAt + currentTimingSeconds - itemManipDelta;
         console.log(`Heard first tone. Scheduling cue sound for ${currentTimingSeconds}s`);
     } else if (nextState == TimingCueState.HeardSecondTone) {
         const difference = audioContext.currentTime - pendingAt;
@@ -329,10 +336,10 @@ function transitionCueState(nextState: TimingCueState) {
             // todo: hit-marker should be shifted over before beep to indicate this
             // todo: when the timing is way off (more than 1s?) just drop the delta
             // possibly don't even move to item timing, user is probably resetting
-            startTimeDelta = difference;
+            itemManipDelta = difference;
         } else {
             // don't carry the difference on item timing thru to event timing
-            startTimeDelta = 0;
+            itemManipDelta = 0;
         }
         timingHitDescription.innerText = `${difference < 0 ? '-' : '+'}${Math.trunc(Math.abs(difference*1000))}ms`;
     }
