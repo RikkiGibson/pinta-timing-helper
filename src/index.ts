@@ -109,14 +109,14 @@ const itemTimingOptionValues: ItemTiming[] = [
     
     { event: 'foundItem', name: 'Idol / Hat / Berzerker', timingSeconds: 6.1 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
     
-    { event: 'foundItem', name: 'Moonberry', timingSeconds: 4.47 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
+    { event: 'foundItem', name: 'Moonberry / Con Gem', timingSeconds: 4.47 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
     
     { event: 'foundItem', name: 'Wind Gem / Eye of Truth', timingSeconds: 1.6 }, // 🔉🛑🛑🅰️
 
     { event: 'tradeShip', name: 'Trade 3B->4B', timingSeconds: 2.14 }, // 🔉🛑🛑🛑|🛑🅰️
 
     // todo: this trade is clearly really hard to go for. Can we please find a found item manip which can give you con gems enough of the time that we can just focus on that?
-    { event: 'tradeShip', name: 'Trade 3B->1A', timingSeconds: 4.47 }, // 🔉🛑🛑🛑|🛑🅰️ 4.36 is idol minus one measure. 4.4 is idol minus "almost one measure". 
+    //{ event: 'tradeShip', name: 'Trade 3B->1A', timingSeconds: 4.47 }, // 🔉🛑🛑🛑|🛑🅰️ 4.36 is idol minus one measure. 4.4 is idol minus "almost one measure". 
 ];
 
 let selectedItemTiming: ItemTiming;
@@ -141,13 +141,12 @@ function ready() {
         itemTimingOptions.options.add(new Option(option.name));
     }
     const localStorageSelectedTimingName = localStorage.getItem('selected-timing-name');
-    itemTimingOptions.addEventListener('change', onTimingSelected);
     if (localStorageSelectedTimingName) {
-        itemTimingOptions.value = localStorageSelectedTimingName;
-        selectedItemTiming = itemTimingOptionValues.find(opt => opt.name === localStorageSelectedTimingName)!;
-    } else {
-        selectedItemTiming = itemTimingOptionValues[0];
+        selectedItemTiming = itemTimingOptionValues.find(opt => opt.name == localStorageSelectedTimingName)!
     }
+    selectedItemTiming = selectedItemTiming || itemTimingOptionValues[0];
+    itemTimingOptions.addEventListener('change', onTimingSelected);
+    itemTimingOptions.value = selectedItemTiming.name;
 
     adjustTimingMarkers();
 
