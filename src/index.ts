@@ -68,7 +68,6 @@ const closeMenuFingerprint = [
     { frequency: 5296.875, amplitude: 156 },
     { frequency: 5648.4375, amplitude: 150 },
     { frequency: 6000, amplitude: 135 },
-    { frequency: 6351.5625, amplitude: 111 },
 ];
 
 const foundItemFingerprint = [
@@ -407,8 +406,8 @@ function detectTone(): boolean {
 
     // debugging
     // if (maxIndex > 0 && maxAmplitude > 80) {
-    //     console.log(`Max frequency: ${maxIndex} (${getFrequency(maxIndex)} Hz). Amplitude: ${maxAmplitude}`);
-    //     savedPeaks.push({ peaks: findPeaks(dataArray), dataArray: dataArray.slice() });
+        //     console.log(`Max frequency: ${maxIndex} (${getFrequency(maxIndex)} Hz). Amplitude: ${maxAmplitude}`);
+        //     savedPeaks.push({ peaks: findPeaks(dataArray), dataArray: dataArray.slice() });
     // }
 
     const fingerprint =
@@ -450,15 +449,16 @@ function detectTone(): boolean {
         */
 
         const frequencyTolerance = 2 * getSampleRate() / frequencyBinCount;
-        // TODO: when multiple peaks lie within 'frequencyTolerance', we need to pick the closest match. reduce?
-        // Perhaps this is making recognition fail in some cases--we are not picking the best peak matching the fingerprint.
-        const currentMatchingPeak = peaks.find(peak => Math.abs(peak.frequency - (currentKnownPeak ?? previousKnownPeak!).frequency) < frequencyTolerance);
-        if (!currentMatchingPeak) {
-            // this signal doesn't have a peak which matches a known peak.
+        if (currentKnownPeak && !findClosest(peaks, currentKnownPeak.frequency, frequencyTolerance)) {
+            return false;
+        }
+        
+        // TODO: could avoid a little work by setting up largerMatchingPeak at the same time we check existence of current/prev here and above
+        if (previousKnownPeak && !findClosest(peaks, previousKnownPeak.frequency, frequencyTolerance)) {
             return false;
         }
 
-        const largerMatchingPeak = peaks.find(peak => Math.abs(peak.frequency - largerKnownPeak.frequency) < frequencyTolerance);
+        const largerMatchingPeak = findClosest(peaks, largerKnownPeak.frequency, frequencyTolerance);
         if (!largerMatchingPeak) {
             // this signal doesn't have a peak which matches a known peak.
             return false;
@@ -488,6 +488,18 @@ function detectTone(): boolean {
     }
 
     return true;
+}
+
+// Finds the peak in 'signalPeaks' whose frequency is closest to 'targetFrequency' and within 'tolerance'
+function findClosest(signalPeaks: Peak[], targetFrequency: number, tolerance: number): Peak | null {
+    var closest = signalPeaks.reduce((prev, curr) =>
+        Math.abs(prev.frequency - targetFrequency) < Math.abs(curr.frequency - targetFrequency)
+            ? prev : curr);
+    if (Math.abs(closest.frequency - targetFrequency) < tolerance) {
+        return closest;
+    } else {
+        return null;
+    }
 }
 
 interface Peak { frequency: number, index: number, amplitude: number };
