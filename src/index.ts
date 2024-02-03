@@ -391,7 +391,7 @@ function getSampleRate(): number {
 }
 
 // debugging
-// let savedPeaks: { peaks: Peak[], dataArray: Uint8Array }[] = [];
+let savedPeaks: { peaks: Peak[], dataArray: Uint8Array }[] = [];
 
 function detectTone(): boolean {
     let maxIndex = 0;
@@ -405,10 +405,10 @@ function detectTone(): boolean {
     }
 
     // debugging
-    // if (maxIndex > 0 && maxAmplitude > 80) {
-        //     console.log(`Max frequency: ${maxIndex} (${getFrequency(maxIndex)} Hz). Amplitude: ${maxAmplitude}`);
-        //     savedPeaks.push({ peaks: findPeaks(dataArray), dataArray: dataArray.slice() });
-    // }
+    if (maxIndex > 0 && maxAmplitude > 80) {
+            console.log(`Max frequency: ${maxIndex} (${getFrequency(maxIndex)} Hz). Amplitude: ${maxAmplitude} Time: ${audioContext.currentTime} Index: ${savedPeaks.length}`);
+            savedPeaks.push({ peaks: findPeaks(dataArray), dataArray: dataArray.slice() });
+    }
 
     const fingerprint =
         cueMode == TimingCueMode.Event && cueState == TimingCueState.CueingSecondTone
