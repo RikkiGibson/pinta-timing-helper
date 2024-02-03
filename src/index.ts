@@ -114,6 +114,8 @@ const itemTimingOptionValues: ItemTiming[] = [
     { event: 'foundItem', name: 'Wind Gem / Eye of Truth', timingSeconds: 1.6 }, // 🔉🛑🛑🅰️
 
     { event: 'tradeShip', name: 'Trade 3B->4B', timingSeconds: 2.14 }, // 🔉🛑🛑🛑|🛑🅰️
+
+    // todo: this trade is clearly really hard to go for. Can we please find a found item manip which can give you con gems enough of the time that we can just focus on that?
     { event: 'tradeShip', name: 'Trade 3B->1A', timingSeconds: 4.47 }, // 🔉🛑🛑🛑|🛑🅰️ 4.36 is idol minus one measure. 4.4 is idol minus "almost one measure". 
 ];
 
