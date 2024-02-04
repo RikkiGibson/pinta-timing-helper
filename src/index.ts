@@ -117,6 +117,8 @@ const itemTimingOptionValues: ItemTiming[] = [
     
     { event: 'foundItem', name: 'Idol / Hat / Berzerker', timingSeconds: 6.1 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
     
+    // been hitting this between -80 and -9ms. Should this be moved earlier..?
+    // have to make sure that a highly responsive mic is used when tuning/testing these.
     { event: 'foundItem', name: 'Moonberry / Con Gem', timingSeconds: 4.40 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
     
     { event: 'foundItem', name: 'Wind Gem / Eye of Truth', timingSeconds: 1.55 }, // 🔉🛑🛑🅰️
@@ -318,14 +320,14 @@ function onFrame() {
 }
 
 function reset() {
-    for (const { timingCursor, timingHitDescription, timingHitMarker, timingLeadUpInners, timingTargetInner } of [eventTimingElements, itemTimingElements]) {
+    for (const { timingCursor, timingHitDescription, timingLeadUpInners, timingTargetInner } of [eventTimingElements, itemTimingElements]) {
         timingCursor.style.width = '0';
         timingHitDescription.innerText = '';
-        timingHitMarker.style.left = `${-timingHitMarker.clientWidth / 2}px`;
         timingLeadUpInners.forEach((elem) => elem.classList.remove('timing-hit'));
         timingTargetInner.classList.remove('timing-hit');
     }
     eventTimingElements.timingHitMarker.classList.remove('hidden');
+    eventTimingElements.timingHitMarker.style.left = `${-eventTimingElements.timingHitMarker.clientWidth / 2}px`;
     itemTimingElements.timingHitMarker.classList.add('hidden');
     cueMode = TimingCueMode.Event;
     cueState = TimingCueState.AwaitingFirstTone;
