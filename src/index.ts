@@ -1,12 +1,5 @@
 document.addEventListener('DOMContentLoaded', ready);
 
-// TODO: Track and transition between event-mode and item-mode
-// as cues go by.
-// e.g. when a cue times out, move to event mode
-// when event mode cue is hit, move to item mode
-// when item mode cue is hit, move back to event mode
-// perhaps when 3-beeps pattern is heard, move to event mode
-// button/hotkey to switch between them manually as needed
 enum TimingCueMode {
     Event = "Event", // Found Item, Trade Ship
     Item = "Item",
@@ -154,6 +147,10 @@ function ready() {
     for (const option of itemTimingOptionValues) {
         itemTimingOptions.options.add(new Option(option.name));
     }
+
+    // TODO: rework selecting the desired timing to be mobile friendly and allow choosing with a single click or gesture
+    //itemTimingOptions.size = itemTimingOptions.options.length;
+
     const localStorageSelectedTimingName = localStorage.getItem('selected-timing-name');
     if (localStorageSelectedTimingName) {
         selectedItemTiming = itemTimingOptionValues.find(opt => opt.name == localStorageSelectedTimingName)!
@@ -193,10 +190,6 @@ function ready() {
     }
 }
 
-// TODO: switch between FOUND ITEM and TRADE SHIP
-// - offer different sets of options for each
-// - actual detection for TRADE SHIP events
-// - transition modes between manip'ing the event and manip'ing the item/trade
 function onTimingSelected(ev: Event) {
     const selectManips = ev.target as HTMLSelectElement;
     selectedItemTiming = itemTimingOptionValues.find(elem => elem.name === selectManips.selectedOptions[0].text)!;
@@ -223,6 +216,9 @@ function adjustTimingMarkers() {
         timingIconsRow.style.width = width;
         const beatWidth = pixelsPerSecond * beatTime;
 
+        // TODO: Can we create multiple timing lead-up meters for long timings?
+        // That way the app UI is not too wide for mobile.
+        // Possibly this would require creating a new timing visualizer for each line.
         timingMeter.querySelectorAll('.timing-line').forEach(node => node.remove());
 
         // insert up to 4 lines to the last single beat
@@ -332,8 +328,6 @@ function onFrame() {
             console.log(`Did not hear response in time. Resetting to pending state.`);
         }
     } else if (cueState == TimingCueState.HeardSecondTone && audioContext.currentTime > pendingAt + 1.0) {
-        // TODO: the trailing A presses tend to unexpectedly push us from event mode to item mode.
-        // how can we prevent that?
         transitionCueState(TimingCueState.AwaitingFirstTone);
         console.log("Cue complete. Ready to hear new tone.");
     }
@@ -388,9 +382,7 @@ function transitionCueState(nextState: TimingCueState) {
         const difference = audioContext.currentTime - pendingAt;
         if (cueMode == TimingCueMode.Event) {
             // carry the difference on the event timing thru to the found item timing
-            // todo: hit-marker should be shifted over before beep to indicate this
-            // todo: when the timing is way off (more than 1s?) just drop the delta
-            // possibly don't even move to item timing, user is probably resetting
+            // todo: when the timing is way off (more than 1s?) just drop the delta?
             itemManipDelta = difference;
         } else {
             // don't carry the difference on item timing thru to event timing
@@ -517,7 +509,6 @@ function detectFingerprint(fingerprint: { frequency: number, amplitude: number }
             return false;
         }
         
-        // TODO: could avoid a little work by setting up largerMatchingPeak at the same time we check existence of current/prev here and above
         const previousMatchingPeak = previousKnownPeak && findClosest(peaks, previousKnownPeak.frequency, frequencyTolerance);
         if (previousKnownPeak && !previousMatchingPeak) {
             return false;
@@ -541,9 +532,6 @@ function detectFingerprint(fingerprint: { frequency: number, amplitude: number }
         const startIndex = previousMatchingPeak ? getIndex(previousMatchingPeak.frequency) : currentMatchingPeak!.frequency / 2;
         const endIndex = currentMatchingPeak ? getIndex(currentMatchingPeak.frequency) : Math.min(previousMatchingPeak!.frequency * 2, (getSampleRate() / 2));
         for (let j = startIndex; j < endIndex; j++) {
-            // TODO: it's quite possible that we need more known peaks in the fingerprint
-            // and to allow a match when simply *enough* of the peaks are matched.
-            // for now, I'm permitting unknown peaks to slightly exceed known ones.
             if (largerMatchingPeak.amplitude < dataArray[j]) {
                 /**
                          u
