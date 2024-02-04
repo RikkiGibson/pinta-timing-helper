@@ -109,14 +109,14 @@ const itemTimingOptionValues: ItemTiming[] = [
     
     { event: 'foundItem', name: 'Idol / Hat / Berzerker', timingSeconds: 6.1 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
     
-    { event: 'foundItem', name: 'Moonberry / Con Gem', timingSeconds: 4.47 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
+    { event: 'foundItem', name: 'Moonberry / Con Gem', timingSeconds: 4.40 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
     
-    { event: 'foundItem', name: 'Wind Gem / Eye of Truth', timingSeconds: 1.6 }, // 🔉🛑🛑🅰️
+    { event: 'foundItem', name: 'Wind Gem / Eye of Truth', timingSeconds: 1.55 }, // 🔉🛑🛑🅰️
 
     { event: 'tradeShip', name: 'Trade 3B->4B', timingSeconds: 2.14 }, // 🔉🛑🛑🛑|🛑🅰️
 
     // todo: this trade is clearly really hard to go for. Can we please find a found item manip which can give you con gems enough of the time that we can just focus on that?
-    //{ event: 'tradeShip', name: 'Trade 3B->1A', timingSeconds: 4.47 }, // 🔉🛑🛑🛑|🛑🅰️ 4.36 is idol minus one measure. 4.4 is idol minus "almost one measure". 
+    //{ event: 'tradeShip', name: 'Trade 3B->1A', timingSeconds: 4.47 }, // 🔉🛑🛑🛑|🛑🅰️ 4.36 is idol minus one measure. 4.4 is idol minus "almost one measure".
 ];
 
 let selectedItemTiming: ItemTiming;
@@ -329,7 +329,7 @@ function transitionCueState(nextState: TimingCueState) {
         timingStartAt = audioContext.currentTime;
         const currentTimingSeconds = getCurrentTimingSeconds();
         pendingAt = timingStartAt + currentTimingSeconds - itemManipDelta;
-        console.log(`Heard first tone. Scheduling cue sound for ${currentTimingSeconds}s`);
+        console.log(`Heard first tone ${audioContext.currentTime}. Scheduling cue sound for ${currentTimingSeconds}s`);
     } else if (nextState == TimingCueState.HeardSecondTone) {
         const difference = audioContext.currentTime - pendingAt;
         if (cueMode == TimingCueMode.Event) {
@@ -343,11 +343,12 @@ function transitionCueState(nextState: TimingCueState) {
             itemManipDelta = 0;
         }
         timingHitDescription.innerText = `${difference < 0 ? '-' : '+'}${Math.trunc(Math.abs(difference*1000))}ms`;
+        console.log(`Heard second tone at ${audioContext.currentTime} (expected at ${pendingAt})`);
     }
     cueState = nextState;
 }
 
-function drawFrequencyGraph(dataArray: Uint8Array, frequencyBinCount: number) {
+function drawFrequencyGraph(dataArray: Uint8Array) {
     canvasCtx.fillStyle = "rgb(200,200,200)";
     canvasCtx.fillRect(0, 0, canvasWidth, canvasHeight);
     canvasCtx.lineWidth = 2;
@@ -413,7 +414,7 @@ function detectTone(): boolean {
     }
 
     // debugging
-    if (maxIndex > 0 && maxAmplitude > 80) {
+    if (maxIndex > 0 && maxAmplitude > 70) {
             console.log(`Max frequency: ${maxIndex} (${getFrequency(maxIndex)} Hz). Amplitude: ${maxAmplitude} Time: ${audioContext.currentTime} Index: ${savedPeaks.length}`);
             savedPeaks.push({ peaks: findPeaks(dataArray), dataArray: dataArray.slice() });
     }
@@ -480,9 +481,9 @@ function detectTone(): boolean {
             // TODO: it's quite possible that we need more known peaks in the fingerprint
             // and to allow a match when simply *enough* of the peaks are matched.
             // for now, I'm permitting unknown peaks to slightly exceed known ones.
-            if ((largerMatchingPeak.amplitude + 10) < dataArray[j]) {
+            if (largerMatchingPeak.amplitude < dataArray[j]) {
                 /**
-                    u
+                         u
                 ----|----k
                 k   |    |
                 |   |    |
@@ -500,10 +501,10 @@ function detectTone(): boolean {
 
 // Finds the peak in 'signalPeaks' whose frequency is closest to 'targetFrequency' and within 'tolerance'
 function findClosest(signalPeaks: Peak[], targetFrequency: number, tolerance: number): Peak | null {
-    var closest = signalPeaks.reduce((prev, curr) =>
+    var closest = signalPeaks.length == 0 ? null : signalPeaks.reduce((prev, curr) =>
         Math.abs(prev.frequency - targetFrequency) < Math.abs(curr.frequency - targetFrequency)
             ? prev : curr);
-    if (Math.abs(closest.frequency - targetFrequency) < tolerance) {
+    if (closest && Math.abs(closest.frequency - targetFrequency) < tolerance) {
         return closest;
     } else {
         return null;
@@ -518,7 +519,7 @@ function findPeaks(frequencyData: Uint8Array, threshold?: number): Peak[] {
         const current = frequencyData[i];
         const previous = frequencyData[i-1];
         const next = frequencyData[i+1];
-        if ((threshold != null && current < threshold) || current < previous || current < next) {
+        if ((threshold != null && current < threshold) || current <= previous || current <= next) {
             continue;
         }
 
