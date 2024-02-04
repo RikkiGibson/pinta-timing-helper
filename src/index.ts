@@ -223,17 +223,37 @@ function adjustTimingMarkers() {
         timingIconsRow.style.width = width;
         const beatWidth = pixelsPerSecond * beatTime;
 
-        const timingLines = timingVisualizer.querySelectorAll<HTMLElement>('.timing-line');
-        timingLines[0].style.right = `${beatWidth * 3 - timingLines[0].clientWidth / 2}px`;
-        timingLines[1].style.right = `${beatWidth * 2 - timingLines[1].clientWidth / 2}px`;
-        timingLines[2].style.right = `${beatWidth - timingLines[2].clientWidth / 2}px`;
-        timingLines[3].style.right = `${-timingLines[3].clientWidth / 2}px`;
+        timingMeter.querySelectorAll('.timing-line').forEach(node => node.remove());
+
+        // insert up to 4 lines to the last single beat
+        for (let currentTime = 0; currentTime < beatTime * 4; currentTime += beatTime) {
+            const line = makeTimingLine();
+            timingMeter.appendChild(line);
+            const position = currentTime * pixelsPerSecond - line.clientWidth / 2;
+            line.style.right = `${position}px`;
+        }
+        
+        // insert one line per measure thru to the left end
+        // Reduce the time "from the right" by a little because it looks weird to have a line too close to the start
+        const maxTime = timingSeconds - beatTime * .1;
+        for (let currentTime = beatTime * 7; currentTime < maxTime; currentTime += beatTime * 4) {
+            const line = makeTimingLine();
+            timingMeter.appendChild(line);
+            const position = currentTime * pixelsPerSecond - line.clientWidth / 2;
+            line.style.right = `${position}px`;
+        }
 
         const timingIcons = timingVisualizer.querySelectorAll<HTMLElement>('.timing-icon');
         timingIcons[0].style.right = `${beatWidth * 3 - timingIcons[0].clientWidth / 2}px`;
         timingIcons[1].style.right = `${beatWidth * 2 - timingIcons[1].clientWidth / 2}px`;
         timingIcons[2].style.right = `${beatWidth - timingIcons[2].clientWidth / 2}px`;
         timingIcons[3].style.right = `${-timingIcons[3].clientWidth / 2}px`;
+    }
+
+    function makeTimingLine(): HTMLDivElement {
+        var timingLine = document.createElement('div');
+        timingLine.classList.add('timing-line');
+        return timingLine;
     }
 }
 
@@ -348,6 +368,7 @@ function transitionCueState(nextState: TimingCueState) {
         timingTargetInner.classList.remove('timing-hit');
         if (cueMode == TimingCueMode.Event) {
             timingHitMarker.classList.add('hidden');
+            // TODO: extract this remove-hidden, rationalize the way we recenter this element after showing it
             itemTimingElements.timingHitMarker.classList.remove('hidden');
             itemTimingElements.timingHitMarker.style.left = `${itemManipDelta * pixelsPerSecond - itemTimingElements.timingHitMarker.clientWidth / 2}px`;
             itemTimingElements.timingHitDescription.innerText = itemManipDelta == 0 ? '' : `${itemManipDelta < 0 ? '-' : '+'}${Math.trunc(Math.abs(itemManipDelta*1000))}ms`;
