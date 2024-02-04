@@ -72,7 +72,15 @@ const foundItemFrequency = 210;
 
 // these fingerprints probably need more harmonics in them.
 // sounds like the disk drive and random clicking will set them off.
+const gameStartFingerprint = [
+    { frequency: 3750, amplitude: 95 },
+    { frequency: 4429.6875, amplitude: 141 },
+    { frequency: 5109.375, amplitude: 146 },
+    { frequency: 5812.5, amplitude: 104 },
+];
+
 const closeMenuFingerprint = [
+    //{ frequency: 4804.6875, amplitude: 158 },
     { frequency: 5296.875, amplitude: 156 },
     { frequency: 5648.4375, amplitude: 150 },
     { frequency: 6000, amplitude: 135 },
@@ -126,11 +134,15 @@ function getCurrentTimingSeconds() {
 }
 
 function ready() {
-    const button = document.getElementById('start-stop-button')!;
-    button.addEventListener('click', startOrStop);
+    document.getElementById('start-stop-button')!
+        .addEventListener('click', startOrStop);
+
+    document.getElementById('reset-button')!
+        .addEventListener('click', reset);
 
     document.getElementById('beep-button')!
         .addEventListener('click', onBeep);
+
 
     eventTimingElements = getTimingVisualizerElements(document.getElementById('event-timing-visualizer')!);
     itemTimingElements = getTimingVisualizerElements(document.getElementById('item-timing-visualizer')!);
@@ -252,7 +264,7 @@ function onFrame() {
 
     requestAnimationFrame(onFrame);
     analyser.getByteFrequencyData(dataArray);
-    drawFrequencyGraph(dataArray, analyser.frequencyBinCount);
+    drawFrequencyGraph(dataArray);
 
     const { timingMeter, timingLeadUpInners, timingTargetInner, timingCursor, timingHitMarker } =
         cueMode == TimingCueMode.Event ? eventTimingElements : itemTimingElements;
@@ -287,16 +299,17 @@ function onFrame() {
         timingHitMarker.style.left = `${position - timingHitMarker.clientWidth / 2}px`;
     }
 
-    if (detectTone()) {
+    if (detectFingerprint(gameStartFingerprint)) {
+        console.log("Heard game start tone. Resetting.");
+        reset();
+    } else if (detectTone()) {
         onBeep();
-    }
-    else if (cueState == TimingCueState.CueingSecondTone) {
+    } else if (cueState == TimingCueState.CueingSecondTone) {
         if (audioContext.currentTime > pendingAt + 1) {
             transitionCueState(TimingCueState.AwaitingFirstTone);
             console.log(`Did not hear response in time. Resetting to pending state.`);
         }
-    }
-    else if (cueState == TimingCueState.HeardSecondTone && audioContext.currentTime > pendingAt + 1.0) {
+    } else if (cueState == TimingCueState.HeardSecondTone && audioContext.currentTime > pendingAt + 1.0) {
         // TODO: the trailing A presses tend to unexpectedly push us from event mode to item mode.
         // how can we prevent that?
         transitionCueState(TimingCueState.AwaitingFirstTone);
@@ -304,9 +317,27 @@ function onFrame() {
     }
 }
 
+function reset() {
+    for (const { timingCursor, timingHitDescription, timingHitMarker, timingLeadUpInners, timingTargetInner } of [eventTimingElements, itemTimingElements]) {
+        timingCursor.style.width = '0';
+        timingHitDescription.innerText = '';
+        timingHitMarker.style.left = `${-timingHitMarker.clientWidth / 2}px`;
+        timingLeadUpInners.forEach((elem) => elem.classList.remove('timing-hit'));
+        timingTargetInner.classList.remove('timing-hit');
+    }
+    eventTimingElements.timingHitMarker.classList.remove('hidden');
+    itemTimingElements.timingHitMarker.classList.add('hidden');
+    cueMode = TimingCueMode.Event;
+    cueState = TimingCueState.AwaitingFirstTone;
+    timingStartAt = 0;
+    pendingAt = 0;
+    itemManipDelta = 0;
+}
+
 function transitionCueState(nextState: TimingCueState) {
     const { timingLeadUpInners, timingTargetInner, timingCursor, timingHitMarker, timingHitDescription } =
         cueMode == TimingCueMode.Event ? eventTimingElements : itemTimingElements;
+
     if (nextState == TimingCueState.AwaitingFirstTone) {
         timingCursor.style.width = '0';
         timingHitDescription.innerText = '';
@@ -400,23 +431,25 @@ function getSampleRate(): number {
 }
 
 // debugging
+let debug = false;
 let savedPeaks: { peaks: Peak[], dataArray: Uint8Array }[] = [];
 
 function detectTone(): boolean {
-    let maxIndex = 0;
-    let maxAmplitude = 0;
-
-    for (let i = 0; i < dataArray.length; i++) {
-        if (dataArray[i] > maxAmplitude) {
-            maxIndex = i;
-            maxAmplitude = dataArray[i];
-        }
-    }
-
     // debugging
-    if (maxIndex > 0 && maxAmplitude > 70) {
-            console.log(`Max frequency: ${maxIndex} (${getFrequency(maxIndex)} Hz). Amplitude: ${maxAmplitude} Time: ${audioContext.currentTime} Index: ${savedPeaks.length}`);
-            savedPeaks.push({ peaks: findPeaks(dataArray), dataArray: dataArray.slice() });
+    if (debug) {
+        let maxIndex = 0;
+        let maxAmplitude = 0;
+
+        for (let i = 0; i < dataArray.length; i++) {
+            if (dataArray[i] > maxAmplitude) {
+                maxIndex = i;
+                maxAmplitude = dataArray[i];
+            }
+        }
+        if (maxIndex > 0 && maxAmplitude > 70) {
+                console.log(`Max frequency: ${maxIndex} (${getFrequency(maxIndex)} Hz). Amplitude: ${maxAmplitude} Time: ${audioContext.currentTime} Index: ${savedPeaks.length}`);
+                savedPeaks.push({ peaks: findPeaks(dataArray), dataArray: dataArray.slice() });
+        }
     }
 
     const fingerprint =
@@ -426,18 +459,15 @@ function detectTone(): boolean {
             ? tradeShipFingerprint
             : foundItemFingerprint;
 
+    return detectFingerprint(fingerprint);
+}
+
+function detectFingerprint(fingerprint: { frequency: number, amplitude: number }[]): boolean {
     const peaks = findPeaks(dataArray);
     for (let i = 0; i <= fingerprint.length; i++)
     {
         const currentKnownPeak = i == fingerprint.length ? null : fingerprint[i];
         const previousKnownPeak = i == 0 ? null : fingerprint[i-1];
-        const largerKnownPeak = !previousKnownPeak ? currentKnownPeak! :
-            !currentKnownPeak ? previousKnownPeak! :
-            // TODO: what if the amplitudes of the "previous matching" and "current matching" peaks do not meet this relation?
-            // Should we say the signal is not a match in that case?
-            previousKnownPeak.amplitude > currentKnownPeak.amplitude
-                ? previousKnownPeak
-                : currentKnownPeak;
         /**
           k--------
           |   u        u
@@ -458,26 +488,36 @@ function detectTone(): boolean {
         */
 
         const frequencyTolerance = 2 * getSampleRate() / frequencyBinCount;
-        if (currentKnownPeak && !findClosest(peaks, currentKnownPeak.frequency, frequencyTolerance)) {
+
+        const currentMatchingPeak = currentKnownPeak && findClosest(peaks, currentKnownPeak.frequency, frequencyTolerance);
+        if (currentKnownPeak && !currentMatchingPeak) {
             return false;
         }
         
         // TODO: could avoid a little work by setting up largerMatchingPeak at the same time we check existence of current/prev here and above
-        if (previousKnownPeak && !findClosest(peaks, previousKnownPeak.frequency, frequencyTolerance)) {
+        const previousMatchingPeak = previousKnownPeak && findClosest(peaks, previousKnownPeak.frequency, frequencyTolerance);
+        if (previousKnownPeak && !previousMatchingPeak) {
             return false;
         }
 
-        const largerMatchingPeak = findClosest(peaks, largerKnownPeak.frequency, frequencyTolerance);
-        if (!largerMatchingPeak) {
-            // this signal doesn't have a peak which matches a known peak.
-            return false;
+        if (!currentMatchingPeak && !previousMatchingPeak) {
+            throw "Found neither a currentMatchingPeak or a previousMatchingPeak but didn't return in earlier checks";
         }
+
+        const largerMatchingPeak = !previousMatchingPeak ? currentMatchingPeak! :
+            !currentMatchingPeak ? previousMatchingPeak! :
+            // TODO: what if the amplitudes of the "previous matching" and "current matching" peaks do not meet this relation?
+            // Should we say the signal is not a match in that case?
+            previousKnownPeak.amplitude > currentKnownPeak.amplitude
+                ? previousMatchingPeak
+                : currentMatchingPeak;
 
         // we should be able to determine this by:
         // -for each known peak k, scan and see the previous known peak, or nothing, thus determining a frequency range in the input signal to scan, and a largestKnownPeak
         // -for each input frequency in this range, scan the amplitudes to ensure that all are smaller than largestKnownPeak.amplitude.
-        const endIndex = getIndex(currentKnownPeak?.frequency ?? (getSampleRate() / 2));
-        for (let j = getIndex(previousKnownPeak?.frequency ?? 0); j < endIndex; j++) {
+        const startIndex = previousMatchingPeak ? getIndex(previousMatchingPeak.frequency) : currentMatchingPeak!.frequency / 2;
+        const endIndex = currentMatchingPeak ? getIndex(currentMatchingPeak.frequency) : Math.min(previousMatchingPeak!.frequency * 2, (getSampleRate() / 2));
+        for (let j = startIndex; j < endIndex; j++) {
             // TODO: it's quite possible that we need more known peaks in the fingerprint
             // and to allow a match when simply *enough* of the peaks are matched.
             // for now, I'm permitting unknown peaks to slightly exceed known ones.
