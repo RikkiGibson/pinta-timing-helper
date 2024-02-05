@@ -63,17 +63,13 @@ const frequencyBinCount = fftSize / 2;
 
 const foundItemFrequency = 210;
 
-// these fingerprints probably need more harmonics in them.
-// sounds like the disk drive and random clicking will set them off.
 const gameStartFingerprint = [
-    { frequency: 3750, amplitude: 95 },
-    { frequency: 4429.6875, amplitude: 141 },
-    { frequency: 5109.375, amplitude: 146 },
-    { frequency: 5812.5, amplitude: 104 },
+    { frequency: 5789.0625, amplitude: 218 },
+    { frequency: 6492.1875, amplitude: 181 },
+    { frequency: 7171.875, amplitude: 150 },
 ];
 
 const closeMenuFingerprint = [
-    //{ frequency: 4804.6875, amplitude: 158 },
     { frequency: 5296.875, amplitude: 156 },
     { frequency: 5648.4375, amplitude: 150 },
     { frequency: 6000, amplitude: 135 },
