@@ -254,6 +254,7 @@ async function startOrStop() {
         running = false;
         audioContext.close();
         audioContext = null!;
+        reset();
         return;
     }
 
