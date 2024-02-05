@@ -540,6 +540,7 @@ function detectFingerprint(fingerprint: { frequency: number, amplitude: number }
         // we should be able to determine this by:
         // -for each known peak k, scan and see the previous known peak, or nothing, thus determining a frequency range in the input signal to scan, and a largestKnownPeak
         // -for each input frequency in this range, scan the amplitudes to ensure that all are smaller than largestKnownPeak.amplitude.
+        // -TODO: Generally the amplitude of higher harmonics will decay, perhaps we can require this. e.g. on the last matching peak, require that no subsequent peak is higher.
         if (previousMatchingPeak && currentMatchingPeak) {
             const startIndex = previousMatchingPeak.index + 1;
             const endIndex = currentMatchingPeak.index - 1;
