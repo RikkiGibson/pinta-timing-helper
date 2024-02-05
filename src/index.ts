@@ -81,10 +81,10 @@ const foundItemFingerprint = [
     { frequency: 7101.5625, amplitude: 88 },
 ];
 
-// TODO: add a third harmonic here, getting too many false positives
 const tradeShipFingerprint = [
-    { frequency: 4875, amplitude: 126 },
-    { frequency: 6070.3125, amplitude: 112 },
+    { frequency: 4851.5625, amplitude: 197 },
+    { frequency: 5484.375, amplitude: 129 },
+    { frequency: 6070.3125, amplitude: 182 },
 ];
 
 const bpm = 138;
@@ -113,7 +113,7 @@ const itemTimingOptionValues: ItemTiming[] = [
     
     { event: 'foundItem', name: 'Wind Gem / Eye of Truth', timingSeconds: 1.55 }, // 🔉🛑🛑🅰️
 
-    { event: 'tradeShip', name: 'Trade 3B->4B', timingSeconds: 2.14 }, // 🔉🛑🛑🛑|🛑🅰️
+    { event: 'tradeShip', name: 'Trade 3B->4B', timingSeconds: 2.19 }, // 🔉🛑🛑🛑|🛑🅰️
 
     //{ event: 'tradeShip', name: 'Trade 3B->1A', timingSeconds: 4.47 }, // 🔉🛑🛑🛑|🛑🅰️ 4.36 is idol minus one measure. 4.4 is idol minus "almost one measure".
 ];
