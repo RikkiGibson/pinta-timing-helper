@@ -554,7 +554,7 @@ function detectFingerprint(fingerprint: { frequency: number, amplitude: number }
 
                 if (smallerMatchingPeak.amplitude < peak.amplitude) {
                     /**
-                             u
+                        u      
                     ----|----k
                     k   |    |
                     |   |    |
