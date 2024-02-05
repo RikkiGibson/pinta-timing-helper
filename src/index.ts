@@ -437,10 +437,6 @@ function getFrequency(index: number): number {
     return getSampleRate() / 2 * index / frequencyBinCount;
 }
 
-function getIndex(frequency: number): number {
-    return frequency * frequencyBinCount * 2 / getSampleRate();
-}
-
 function getSampleRate(): number {
     return audioContext?.sampleRate ?? 48000;
 }
@@ -632,33 +628,4 @@ function onBeep() {
         transitionCueState(TimingCueState.HeardSecondTone);
         return;
     }
-}
-
-
-function analyzeTone() {
-    const oscillator = audioContext.createOscillator();
-    oscillator.type = 'square';
-    oscillator.frequency.value = 536;
-
-    const gain = audioContext.createGain();
-    gain.gain.value = 0.1;
-    oscillator.connect(gain);
-    gain.connect(analyser);
-    gain.connect(audioContext.destination);
-    oscillator.start();
-}
-
-function beep(when: number, frequency: number) {
-    const oscillator = audioContext.createOscillator();
-    oscillator.type = 'square';
-    oscillator.frequency.value = frequency;
-
-    const gain = audioContext.createGain();
-    gain.gain.value = 0.5;
-
-    oscillator.connect(gain);
-    gain.connect(audioContext.destination);
-
-    oscillator.start(when);
-    oscillator.stop(when + .01);
 }
