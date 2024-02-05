@@ -108,7 +108,7 @@ interface ItemTiming { event: 'foundItem' | 'tradeShip', name: string, timingSec
 const itemTimingOptionValues: ItemTiming[] = [
     { event: 'foundItem', name: 'B Item', timingSeconds: 3.43 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🅰️
     
-    { event: 'foundItem', name: 'Idol / Hat / Berzerker', timingSeconds: 6.1 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
+    { event: 'foundItem', name: 'Idol / Hat / Berzerker', timingSeconds: 6.05 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
     
     // been hitting this between -80 and -9ms. Should this be moved earlier..?
     // have to make sure that a highly responsive mic is used when tuning/testing these.
@@ -449,6 +449,14 @@ function getSampleRate(): number {
 let debug = false;
 let savedPeaks: { peaks: Peak[], dataArray: Uint8Array }[] = [];
 
+function debugIndex(index: number, fingerprint?: any) {
+    if (!debug) throw "Set 'debug = true' first";
+
+    dataArray = savedPeaks[index].dataArray;
+    drawFrequencyGraph(dataArray);
+    detectFingerprint(fingerprint || foundItemFingerprint);
+}
+
 function detectTone(): boolean {
     // debugging
     if (debug) {
@@ -477,6 +485,9 @@ function detectTone(): boolean {
     return detectFingerprint(fingerprint);
 }
 
+// TODO: this is looking *pretty good* in terms of catching real beeps enough of the time
+// and not having many false positives.
+// However, it's not detecting the reset sound. Let's try to fix.
 function detectFingerprint(fingerprint: { frequency: number, amplitude: number }[]): boolean {
     const peaks = findPeaks(dataArray);
     for (let i = 0; i <= fingerprint.length; i++)
@@ -518,31 +529,49 @@ function detectFingerprint(fingerprint: { frequency: number, amplitude: number }
             throw "Found neither a currentMatchingPeak or a previousMatchingPeak but didn't return in earlier checks";
         }
 
-        const largerMatchingPeak = !previousMatchingPeak ? currentMatchingPeak! :
+        if (previousMatchingPeak && currentMatchingPeak) {
+            const expectedRatio = previousKnownPeak.amplitude / currentKnownPeak.amplitude;
+            const actualRatio = previousMatchingPeak.amplitude / currentMatchingPeak.amplitude;
+            if (Math.abs(expectedRatio - actualRatio) > 0.2) {
+                // The amplitude ratio between known peaks needs to be pretty close
+                // the amplitude ratio between matching peaks
+                // Here they are too far apart
+                return false;
+            }
+        }
+
+        const smallerMatchingPeak = !previousMatchingPeak ? currentMatchingPeak! :
             !currentMatchingPeak ? previousMatchingPeak! :
-            // TODO: what if the amplitudes of the "previous matching" and "current matching" peaks do not meet this relation?
-            // Should we say the signal is not a match in that case?
-            previousKnownPeak.amplitude > currentKnownPeak.amplitude
-                ? previousMatchingPeak
-                : currentMatchingPeak;
+            previousMatchingPeak.amplitude > currentMatchingPeak.amplitude
+                ? currentMatchingPeak
+                : previousMatchingPeak;
 
         // we should be able to determine this by:
         // -for each known peak k, scan and see the previous known peak, or nothing, thus determining a frequency range in the input signal to scan, and a largestKnownPeak
         // -for each input frequency in this range, scan the amplitudes to ensure that all are smaller than largestKnownPeak.amplitude.
-        const startIndex = previousMatchingPeak ? getIndex(previousMatchingPeak.frequency) : currentMatchingPeak!.frequency / 2;
-        const endIndex = currentMatchingPeak ? getIndex(currentMatchingPeak.frequency) : Math.min(previousMatchingPeak!.frequency * 2, (getSampleRate() / 2));
-        for (let j = startIndex; j < endIndex; j++) {
-            if (largerMatchingPeak.amplitude < dataArray[j]) {
-                /**
-                         u
-                ----|----k
-                k   |    |
-                |   |    |
-                |   |    |
-                Input signal has a peak between known peaks which is larger than amplitude of known peaks.
-                This signal doesn't match the fingerprint.
-                */
-                return false;
+        if (previousMatchingPeak && currentMatchingPeak) {
+            const startIndex = previousMatchingPeak.index + 1;
+            const endIndex = currentMatchingPeak.index - 1;
+            for (const peak of peaks) {
+                if (peak.index < startIndex) {
+                    continue;
+                }
+                if (peak.index >= endIndex) {
+                    break;
+                }
+
+                if (smallerMatchingPeak.amplitude < peak.amplitude) {
+                    /**
+                             u
+                    ----|----k
+                    k   |    |
+                    |   |    |
+                    |   |    |
+                    Input signal has a peak between known peaks which is larger than amplitude of known peaks.
+                    This signal doesn't match the fingerprint.
+                    */
+                    return false;
+                }
             }
         }
     }
@@ -562,6 +591,9 @@ function findClosest(signalPeaks: Peak[], targetFrequency: number, tolerance: nu
     }
 }
 
+/** When peaks are closer than this it means they should be merged */
+const peakMergeThreshold = 2;
+
 interface Peak { frequency: number, index: number, amplitude: number };
 function findPeaks(frequencyData: Uint8Array, threshold?: number): Peak[] {
 
@@ -575,7 +607,7 @@ function findPeaks(frequencyData: Uint8Array, threshold?: number): Peak[] {
         }
 
         const lastPeak = peaks[peaks.length - 1];
-        if (lastPeak && i - lastPeak.index < 2) {
+        if (lastPeak && i - lastPeak.index < peakMergeThreshold) {
             // peaks are too close, take whichever of the two is bigger
             if (lastPeak.amplitude > current) {
                 continue; // drop the current peak
