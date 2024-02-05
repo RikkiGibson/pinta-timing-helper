@@ -554,9 +554,9 @@ function detectFingerprint(fingerprint: { frequency: number, amplitude: number }
 
                 if (smallerMatchingPeak.amplitude < peak.amplitude) {
                     /**
-                        u      
-                    ----|----k
-                    k   |    |
+                             k  
+                        u    |
+                    k---|----|
                     |   |    |
                     |   |    |
                     Input signal has a peak between known peaks which is larger than amplitude of known peaks.
