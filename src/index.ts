@@ -81,6 +81,7 @@ const foundItemFingerprint = [
     { frequency: 7101.5625, amplitude: 88 },
 ];
 
+// TODO: add a third harmonic here, getting too many false positives
 const tradeShipFingerprint = [
     { frequency: 4875, amplitude: 126 },
     { frequency: 6070.3125, amplitude: 112 },
@@ -452,7 +453,6 @@ function debugIndex(index: number, fingerprint?: any) {
 }
 
 function detectTone(): boolean {
-    // debugging
     if (debug) {
         let maxIndex = 0;
         let maxAmplitude = 0;
@@ -472,7 +472,7 @@ function detectTone(): boolean {
     const fingerprint =
         cueMode == TimingCueMode.Event && cueState == TimingCueState.CueingSecondTone
         ? closeMenuFingerprint
-        : selectedItemTiming.event == "tradeShip" && cueState == TimingCueState.AwaitingFirstTone
+        : cueMode == TimingCueMode.Item && selectedItemTiming.event == "tradeShip" && cueState == TimingCueState.AwaitingFirstTone
             ? tradeShipFingerprint
             : foundItemFingerprint;
 
