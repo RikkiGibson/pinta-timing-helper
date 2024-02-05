@@ -114,7 +114,6 @@ const itemTimingOptionValues: ItemTiming[] = [
 
     { event: 'tradeShip', name: 'Trade 3B->4B', timingSeconds: 2.14 }, // 🔉🛑🛑🛑|🛑🅰️
 
-    // todo: this trade is clearly really hard to go for. Can we please find a found item manip which can give you con gems enough of the time that we can just focus on that?
     //{ event: 'tradeShip', name: 'Trade 3B->1A', timingSeconds: 4.47 }, // 🔉🛑🛑🛑|🛑🅰️ 4.36 is idol minus one measure. 4.4 is idol minus "almost one measure".
 ];
 
@@ -145,6 +144,7 @@ function ready() {
     }
 
     // TODO: rework selecting the desired timing to be mobile friendly and allow choosing with a single click or gesture
+    // perhaps number the options and allow selecting one with the number keys
     //itemTimingOptions.size = itemTimingOptions.options.length;
 
     const localStorageSelectedTimingName = localStorage.getItem('selected-timing-name');
@@ -379,6 +379,7 @@ function transitionCueState(nextState: TimingCueState) {
         if (cueMode == TimingCueMode.Event) {
             // carry the difference on the event timing thru to the found item timing
             // todo: when the timing is way off (more than 1s?) just drop the delta?
+            // no need to reset as if the player is resetting we will hear it
             itemManipDelta = difference;
         } else {
             // don't carry the difference on item timing thru to event timing
@@ -477,9 +478,6 @@ function detectTone(): boolean {
     return detectFingerprint(fingerprint);
 }
 
-// TODO: this is looking *pretty good* in terms of catching real beeps enough of the time
-// and not having many false positives.
-// However, it's not detecting the reset sound. Let's try to fix.
 function detectFingerprint(fingerprint: { frequency: number, amplitude: number }[]): boolean {
     const peaks = findPeaks(dataArray);
     for (let i = 0; i <= fingerprint.length; i++)
