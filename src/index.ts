@@ -209,24 +209,45 @@ function adjustTimingMarkers() {
         document.getElementById("item-timing-visualizer")!);
 
     function adjustTimingMarkers1(timingSeconds: number, timingVisualizer: HTMLElement) {
-        const width = `${pixelsPerSecond * timingSeconds}px`;
+        const width = `${pixelsPerSecond * Math.min(beatTime * 7, timingSeconds)}px`;
         const timingMeter = timingVisualizer.querySelector<HTMLDivElement>('.timing-meter')!;
         timingMeter.style.width = width;
         const timingIconsRow = timingVisualizer.querySelector<HTMLDivElement>('.timing-icons')!;
         timingIconsRow.style.width = width;
         const beatWidth = pixelsPerSecond * beatTime;
 
-        // TODO: Can we create multiple timing lead-up meters for long timings?
-        // That way the app UI is not too wide for mobile.
-        // Possibly this would require creating a new timing visualizer for each line.
         timingMeter.querySelectorAll('.timing-line').forEach(node => node.remove());
-
+        
         // insert up to 4 lines to the last single beat
         for (let currentTime = 0; currentTime < beatTime * 4; currentTime += beatTime) {
             const line = makeTimingLine();
             timingMeter.appendChild(line);
             const position = currentTime * pixelsPerSecond - line.clientWidth / 2;
             line.style.right = `${position}px`;
+        }
+
+        timingVisualizer.querySelectorAll('.lead-up-timing-icons').forEach(node => node.remove());
+        timingVisualizer.querySelectorAll('.lead-up-timing-meter').forEach(node => node.remove());
+
+        // TODO: balancing the widths of the timing meter in all cases is feeling difficult..
+        // maybe we should aim to have roughly equal number of measures in each line?
+        // e.g. B Item manip is like 9 beats. Shouldn't that be like 5 then 4?
+        for (let remainingTime = timingSeconds - beatTime * 7; remainingTime > 0; remainingTime -= beatTime * 8) {
+            // insert a lead-up timing meter a row above
+            const width = `${Math.min(beatWidth * 8, remainingTime * pixelsPerSecond)}px`;
+            const leadUpIcons = makeLeadUpTimingIcons();
+            leadUpIcons.style.width = width;
+            timingVisualizer.prepend(leadUpIcons);
+
+            const leadUpMeter = makeLeadUpTimingMeter();
+            leadUpMeter.style.width = width;
+            timingVisualizer.prepend(leadUpMeter);
+            if (remainingTime - beatTime * 4 > 0) {
+                // insert a measure line
+                const line = makeTimingLine();
+                leadUpMeter.appendChild(line);
+                line.style.right = `${beatWidth * 4 - line.clientWidth / 2}px`;
+            }
         }
         
         // insert one line per measure thru to the left end
@@ -250,6 +271,32 @@ function adjustTimingMarkers() {
         var timingLine = document.createElement('div');
         timingLine.classList.add('timing-line');
         return timingLine;
+    }
+
+    function makeLeadUpTimingIcons(): HTMLDivElement {
+        var timingMeter = document.createElement('div');
+        timingMeter.classList.add('lead-up-timing-icons');
+        timingMeter.classList.add('row');
+
+        var timingCursor = document.createElement('div');
+        timingCursor.classList.add('timing-spacer');
+
+        timingMeter.appendChild(timingCursor);
+
+        return timingMeter;
+    }
+
+    function makeLeadUpTimingMeter(): HTMLDivElement {
+        var timingMeter = document.createElement('div');
+        timingMeter.classList.add('lead-up-timing-meter');
+        timingMeter.classList.add('row');
+
+        var timingCursor = document.createElement('div');
+        timingCursor.classList.add('timing-cursor');
+
+        timingMeter.appendChild(timingCursor);
+
+        return timingMeter;
     }
 }
 

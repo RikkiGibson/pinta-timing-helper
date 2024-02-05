@@ -45,6 +45,12 @@ body {
     margin: 5px;
 }
 
+.lead-up-timing-meter {
+    background-color: var(--pintaBlue);
+    border: solid 1px var(--pintaSilver);
+    position: relative;
+}
+
 .timing-meter {
     background-color: var(--pintaBlue);
     border: solid 1px var(--pintaSilver);
@@ -56,6 +62,11 @@ body {
     background-color: var(--pintaSilver);
     position: absolute;
     height: 20px;
+}
+
+.lead-up-timing-icons {
+    position: relative;
+    align-items: center;
 }
 
 .timing-icons {
