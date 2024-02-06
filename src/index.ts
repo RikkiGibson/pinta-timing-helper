@@ -105,7 +105,7 @@ interface ItemTiming { event: 'foundItem' | 'tradeShip', name: string, timingSec
 const itemTimingOptionValues: ItemTiming[] = [
     { event: 'foundItem', name: 'B Item', timingSeconds: 3.43 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🅰️
     
-    { event: 'foundItem', name: 'Idol / Hat / Berzerker', timingSeconds: 6.05 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
+    { event: 'foundItem', name: 'Idol / Hat / Berzerker', timingSeconds: 6.03 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
     
     // been hitting this between -80 and -9ms. Should this be moved earlier..?
     // have to make sure that a highly responsive mic is used when tuning/testing these.
@@ -316,6 +316,8 @@ function onFrame() {
     }
 
     if (detectFingerprint(gameStartFingerprint)) {
+        // TODO: we could include a timer here which indicates the earliest time that the "response beep" for the found item event could occur
+        // This would signal to the player that they need to put the VMU up to the mic
         console.log("Heard game start tone. Resetting.");
         reset();
     } else if (detectTone()) {
