@@ -102,6 +102,8 @@ const eventTimingOptions = {
 // e.g. maybe you need 3B->4B trades. Let's keep Found B Item next to that.
 interface ItemTiming { event: 'foundItem' | 'tradeShip', name: string, timingSeconds: number };
 
+// TODO: the exact timings to use here seem to depend on your mic.
+// Perhaps include a "timing fine tuner" setting to add +/-30ms or so.
 const itemTimingOptionValues: ItemTiming[] = [
     { event: 'foundItem', name: 'B Item', timingSeconds: 3.43 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🅰️
     
@@ -525,7 +527,7 @@ function detectFingerprint(fingerprint: { frequency: number, amplitude: number }
         if (previousMatchingPeak && currentMatchingPeak) {
             const expectedRatio = previousKnownPeak.amplitude / currentKnownPeak.amplitude;
             const actualRatio = previousMatchingPeak.amplitude / currentMatchingPeak.amplitude;
-            if (Math.abs(expectedRatio - actualRatio) > 0.2) {
+            if (Math.abs(expectedRatio - actualRatio) > 0.25) {
                 // The amplitude ratio between known peaks needs to be pretty close
                 // the amplitude ratio between matching peaks
                 // Here they are too far apart
