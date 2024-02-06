@@ -45,6 +45,7 @@ interface TimingVisualizerDynamicElements {
     timingCursor: HTMLDivElement;
     timingHitMarker: HTMLDivElement;
     timingHitDescription: HTMLDivElement;
+    timingMeasureLeadUpInners: HTMLDivElement[];
     timingLeadUpInners: HTMLDivElement[];
     timingTargetInner: HTMLDivElement;
 }
@@ -93,7 +94,8 @@ const toneDuration = 0.35;
 const frameTime = 1 / 60; // i.e. 60fps
 
 const eventTimingOptions = {
-    foundItem: 1.3, // 🔉🔉🔉|🅰️🛑🛑🅱️
+    foundItem: 10.3, // 🔉🔉🔉|🅰️🛑🛑🅱️
+    // foundItem: 1.3, // 🔉🔉🔉|🅰️🛑🛑🅱️
     tradeShip: 2.1, // 🔉🔉🔉|🅰️🛑🛑🛑|🛑🅱️
 };
 
@@ -183,6 +185,7 @@ function ready() {
             timingCursor,
             timingHitDescription,
             timingHitMarker,
+            timingMeasureLeadUpInners: [],
             timingLeadUpInners,
             timingTargetInner
         };
@@ -213,24 +216,62 @@ function adjustTimingMarkers() {
     // event timing
     adjustTimingMarkers1(
         eventTimingOptions[selectedItemTiming.event],
-        document.getElementById("event-timing-visualizer")!);
+        document.getElementById("event-timing-visualizer")!,
+        eventTimingElements);
 
     // item timing
     adjustTimingMarkers1(
         selectedItemTiming.timingSeconds,
-        document.getElementById("item-timing-visualizer")!);
+        document.getElementById("item-timing-visualizer")!,
+        itemTimingElements);
 
-    function adjustTimingMarkers1(timingSeconds: number, timingVisualizer: HTMLElement) {
-        const width = `${pixelsPerSecond * timingSeconds}px`;
+    function adjustTimingMarkers1(timingSeconds: number, timingVisualizer: HTMLElement, dynamicElements: TimingVisualizerDynamicElements) {
         const timingMeter = timingVisualizer.querySelector<HTMLDivElement>('.timing-meter')!;
-        timingMeter.style.width = width;
         const timingIconsRow = timingVisualizer.querySelector<HTMLDivElement>('.timing-icons')!;
+
+        timingVisualizer.querySelectorAll<HTMLDivElement>('.timing-measure-lead-up')!.forEach(elem => elem.remove());
+        dynamicElements.timingMeasureLeadUpInners = [];
+        
+        let remainingTime = timingSeconds;
+        if (remainingTime > beatTime * 9) {
+            // remaining time is too big. Introduce "measure lead ups" to compress it visually
+            let innerRemainingTime = remainingTime - beatTime * 7;
+            remainingTime = beatTime * 7;
+
+            while (innerRemainingTime > 0) {
+                const toNextMeasure = innerRemainingTime % (beatTime * 4);
+                const toRemove = toNextMeasure == 0 ? (beatTime * 4) : toNextMeasure;
+                const percentage = toRemove / (beatTime * 4);
+                const { measureLeadUp, inner } = makeTimingMeasureLeadUp();
+                dynamicElements.timingMeasureLeadUpInners.push(inner);
+                timingIconsRow.appendChild(measureLeadUp);
+    
+                if (percentage < .99) {
+                    // reduce the area of the circle by the percentage
+                    // ignore pi, it's just proportional to square of radius
+                    const baseArea = 20 * 20;
+                    const newArea = baseArea * percentage;
+                    const newRadius = Math.round(Math.sqrt(newArea));
+    
+                    const size = `${newRadius}px`;
+                    measureLeadUp.style.width = size;
+                    measureLeadUp.style.height = size;
+                }
+    
+                innerRemainingTime -= toRemove;
+            }
+
+            if (Math.round(innerRemainingTime) != 0) {
+                throw "unconsumed time in above loop";
+            }
+        }
+
+        const width = `${pixelsPerSecond * remainingTime}px`;
+        timingMeter.style.width = width;
         timingIconsRow.style.width = width;
+
         const beatWidth = pixelsPerSecond * beatTime;
 
-        // TODO: Can we create multiple timing lead-up meters for long timings?
-        // That way the app UI is not too wide for mobile.
-        // Possibly this would require creating a new timing visualizer for each line.
         timingMeter.querySelectorAll('.timing-line').forEach(node => node.remove());
 
         // insert up to 4 lines to the last single beat
@@ -243,7 +284,7 @@ function adjustTimingMarkers() {
         
         // insert one line per measure thru to the left end
         // Reduce the time "from the right" by a little because it looks weird to have a line too close to the start
-        const maxTime = timingSeconds - beatTime * .1;
+        const maxTime = remainingTime - beatTime * .1;
         for (let currentTime = beatTime * 7; currentTime < maxTime; currentTime += beatTime * 4) {
             const line = makeTimingLine();
             timingMeter.appendChild(line);
@@ -259,9 +300,21 @@ function adjustTimingMarkers() {
     }
 
     function makeTimingLine(): HTMLDivElement {
-        var timingLine = document.createElement('div');
+        const timingLine = document.createElement('div');
         timingLine.classList.add('timing-line');
         return timingLine;
+    }
+
+    function makeTimingMeasureLeadUp(): { measureLeadUp: HTMLDivElement, inner: HTMLDivElement } {
+        const measureLeadUp = document.createElement('div');
+        measureLeadUp.classList.add('timing-measure-lead-up');
+        measureLeadUp.classList.add('timing-icon');
+        
+        const inner = document.createElement('div');
+        inner.classList.add('timing-measure-lead-up-inner');
+        measureLeadUp.appendChild(inner);
+
+        return { measureLeadUp, inner };
     }
 }
 
@@ -297,7 +350,7 @@ function onFrame() {
     analyser.getByteFrequencyData(dataArray);
     drawFrequencyGraph(dataArray);
 
-    const { timingMeter, timingLeadUpInners, timingTargetInner, timingCursor, timingHitMarker } =
+    const { timingMeter, timingMeasureLeadUpInners, timingLeadUpInners, timingTargetInner, timingCursor, timingHitMarker } =
         cueMode == TimingCueMode.Event ? eventTimingElements : itemTimingElements;
     if (cueState == TimingCueState.CueingSecondTone || cueState == TimingCueState.HeardSecondTone) {
         const positionWithinMeasure = (pendingAt - audioContext.currentTime) % (beatTime * 4);
@@ -323,7 +376,27 @@ function onFrame() {
     }
 
     if (cueState == TimingCueState.CueingSecondTone) {
-        const percentageComplete = (itemManipDelta + audioContext.currentTime - timingStartAt) / getCurrentTimingSeconds();
+        const elapsed = itemManipDelta + audioContext.currentTime - timingStartAt;
+        
+        // allocate the time to different UI elements
+        let unallocatedTime = elapsed;
+        const lastSegmentRelativeStart = Math.max(getCurrentTimingSeconds() - beatTime * 7, 0);
+        if (lastSegmentRelativeStart > 0) {
+            // fill in any "measure lead ups"
+            
+            const firstLeadUp = (getCurrentTimingSeconds() + beatTime) % (beatTime * 4);
+            if (unallocatedTime > firstLeadUp) {
+                timingMeasureLeadUpInners[0].classList.add('timing-measure-hit');
+                unallocatedTime -= firstLeadUp;
+            }
+
+            for (let i = 1; i < timingMeasureLeadUpInners.length && unallocatedTime > beatTime * 7; i++, unallocatedTime -= beatTime * 4) {
+                timingMeasureLeadUpInners[i].classList.add('timing-measure-hit');
+            }
+        }
+        
+        // then fill in the correct proportion of meter for last 7 beats
+        const percentageComplete = elapsed < lastSegmentRelativeStart ? 0 : unallocatedTime / Math.min(getCurrentTimingSeconds(), beatTime * 7);
         const timingMeterWidth = timingMeter.clientWidth;
         const position = timingMeterWidth * percentageComplete;
         timingCursor.style.width = `${position}px`;

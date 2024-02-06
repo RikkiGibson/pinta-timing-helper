@@ -69,11 +69,26 @@ body {
     justify-content: center;
 }
 
+.timing-measure-lead-up {
+    height: 17px;
+    width: 17px;
+    margin: 0px 5px;
+    background-color: var(--pintaBlue);
+    border-radius: 50%;
+}
+
+.timing-measure-hit {
+    border-radius: 50%;
+    background-color: var(--pintaYellow);
+    width: 70%;
+    height: 70%;
+}
+
 .timing-lead-up {
     clip-path: polygon(0% 0%, 100% 0%, 50% 100%);
     position: absolute;
-    height: 17px;
-    width: 17px;
+    height: 20px;
+    width: 20px;
     background-color: var(--pintaBlue);
 }
 
