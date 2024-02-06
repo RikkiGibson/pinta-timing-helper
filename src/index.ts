@@ -120,6 +120,7 @@ const itemTimingOptionValues: ItemTiming[] = [
     //{ event: 'tradeShip', name: 'Trade 3B->1A', timingSeconds: 4.47 }, // 🔉🛑🛑🛑|🛑🅰️ 4.36 is idol minus one measure. 4.4 is idol minus "almost one measure".
 ];
 
+let selectItemTiming: HTMLSelectElement;
 let selectedItemTiming: ItemTiming;
 
 function getCurrentTimingSeconds() {
@@ -136,27 +137,26 @@ function ready() {
     document.getElementById('beep-button')!
         .addEventListener('click', onBeep);
 
+    document.addEventListener('keydown', onKey);
 
     eventTimingElements = getTimingVisualizerElements(document.getElementById('event-timing-visualizer')!);
     itemTimingElements = getTimingVisualizerElements(document.getElementById('item-timing-visualizer')!);
     itemTimingElements.timingHitMarker.classList.add('hidden');
 
-    const itemTimingOptions = document.getElementById('select-manips') as HTMLSelectElement;
+    selectItemTiming = document.getElementById('select-manips') as HTMLSelectElement;
     for (const option of itemTimingOptionValues) {
-        itemTimingOptions.options.add(new Option(option.name));
+        selectItemTiming.options.add(new Option(option.name));
     }
 
-    // TODO: rework selecting the desired timing to be mobile friendly and allow choosing with a single click or gesture
-    // perhaps number the options and allow selecting one with the number keys
-    //itemTimingOptions.size = itemTimingOptions.options.length;
+    selectItemTiming.size = selectItemTiming.options.length;
 
     const localStorageSelectedTimingName = localStorage.getItem('selected-timing-name');
     if (localStorageSelectedTimingName) {
         selectedItemTiming = itemTimingOptionValues.find(opt => opt.name == localStorageSelectedTimingName)!
     }
     selectedItemTiming = selectedItemTiming || itemTimingOptionValues[0];
-    itemTimingOptions.addEventListener('change', onTimingSelected);
-    itemTimingOptions.value = selectedItemTiming.name;
+    selectItemTiming.addEventListener('change', onTimingSelected);
+    selectItemTiming.value = selectedItemTiming.name;
 
     adjustTimingMarkers();
 
@@ -189,9 +189,22 @@ function ready() {
     }
 }
 
-function onTimingSelected(ev: Event) {
-    const selectManips = ev.target as HTMLSelectElement;
-    selectedItemTiming = itemTimingOptionValues.find(elem => elem.name === selectManips.selectedOptions[0].text)!;
+function onKey(ev: KeyboardEvent) {
+    if (ev.code === 'BracketLeft' && selectItemTiming.selectedIndex > 0) {
+        selectItemTiming.selectedIndex--;
+        onTimingSelected();
+        return;
+    }
+
+    if (ev.code === 'BracketRight' && selectItemTiming.selectedIndex < selectItemTiming.options.length - 1) {
+        selectItemTiming.selectedIndex++;
+        onTimingSelected();
+        return;
+    }
+}
+
+function onTimingSelected() {
+    selectedItemTiming = itemTimingOptionValues.find(elem => elem.name === selectItemTiming.selectedOptions[0].text)!;
     localStorage.setItem('selected-timing-name', selectedItemTiming.name);
     adjustTimingMarkers();
 }
@@ -528,9 +541,8 @@ function detectFingerprint(fingerprint: { frequency: number, amplitude: number }
             const expectedRatio = previousKnownPeak.amplitude / currentKnownPeak.amplitude;
             const actualRatio = previousMatchingPeak.amplitude / currentMatchingPeak.amplitude;
             if (Math.abs(expectedRatio - actualRatio) > 0.25) {
-                // The amplitude ratio between known peaks needs to be pretty close
-                // the amplitude ratio between matching peaks
-                // Here they are too far apart
+                // The amplitude ratio between known peaks needs to be pretty close to
+                // the same ratio between matching peaks. Here they are too far apart.
                 return false;
             }
         }
