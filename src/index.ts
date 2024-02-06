@@ -107,11 +107,11 @@ interface ItemTiming { event: 'foundItem' | 'tradeShip', name: string, timingSec
 const itemTimingOptionValues: ItemTiming[] = [
     { event: 'foundItem', name: 'B Item', timingSeconds: 3.43 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🅰️
     
-    { event: 'foundItem', name: 'Idol / Hat / Berzerker', timingSeconds: 6.03 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
+    { event: 'foundItem', name: 'Idol / Hat / Berzerker', timingSeconds: 6.1 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
     
     // been hitting this between -80 and -9ms. Should this be moved earlier..?
     // have to make sure that a highly responsive mic is used when tuning/testing these.
-    { event: 'foundItem', name: 'Moonberry / Con Gem', timingSeconds: 4.40 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
+    { event: 'foundItem', name: 'Moonberry / Con Gem', timingSeconds: 4.48 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
     
     { event: 'foundItem', name: 'Wind Gem / Eye of Truth', timingSeconds: 1.55 }, // 🔉🛑🛑🅰️
 
