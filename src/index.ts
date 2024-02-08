@@ -227,6 +227,8 @@ function adjustTimingMarkers() {
 
     function adjustTimingMarkers1(timingSeconds: number, timingVisualizer: HTMLElement, dynamicElements: TimingVisualizerDynamicElements) {
         const timingMeter = timingVisualizer.querySelector<HTMLDivElement>('.timing-meter')!;
+        const timingMeasureIndicator = timingVisualizer.querySelector<HTMLDivElement>('.timing-measure-indicator')!;
+        const timingIndicator = timingVisualizer.querySelector<HTMLDivElement>('.timing-indicator')!;
         const timingIconsRow = timingVisualizer.querySelector<HTMLDivElement>('.timing-icons')!;
 
         timingVisualizer.querySelectorAll<HTMLDivElement>('.timing-measure-lead-up')!.forEach(elem => elem.remove());
@@ -235,16 +237,16 @@ function adjustTimingMarkers() {
         let remainingTime = timingSeconds;
         if (remainingTime > beatTime * 9) {
             // remaining time is too big. Introduce "measure lead ups" to compress it visually
-            let innerRemainingTime = remainingTime - beatTime * 7;
-            remainingTime = beatTime * 7;
+            let innerRemainingTime = remainingTime - beatTime * 3;
+            remainingTime = beatTime * 3;
 
             while (innerRemainingTime > 0) {
                 const toNextMeasure = innerRemainingTime % (beatTime * 4);
-                const toRemove = toNextMeasure == 0 ? (beatTime * 4) : toNextMeasure;
+                const toRemove = toNextMeasure < 1e-5 ? (beatTime * 4) : toNextMeasure;
                 const percentage = toRemove / (beatTime * 4);
                 const { measureLeadUp, inner } = makeTimingMeasureLeadUp();
                 dynamicElements.timingMeasureLeadUpInners.push(inner);
-                timingIconsRow.appendChild(measureLeadUp);
+                timingMeasureIndicator.append(measureLeadUp);
     
                 if (percentage < .99) {
                     // reduce the area of the circle by the percentage

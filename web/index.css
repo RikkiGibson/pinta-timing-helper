@@ -45,6 +45,10 @@ body {
     margin: 5px;
 }
 
+.timing-measure-indicator {
+    align-items: center;
+}
+
 .timing-meter {
     background-color: var(--pintaBlue);
     border: solid 1px var(--pintaSilver);
