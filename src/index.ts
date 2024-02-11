@@ -228,9 +228,6 @@ function adjustTimingMarkers() {
         timingIconsRow.style.width = width;
         const beatWidth = pixelsPerSecond * beatTime;
 
-        // TODO: Can we create multiple timing lead-up meters for long timings?
-        // That way the app UI is not too wide for mobile.
-        // Possibly this would require creating a new timing visualizer for each line.
         timingMeter.querySelectorAll('.timing-line').forEach(node => node.remove());
 
         // insert up to 4 lines to the last single beat
