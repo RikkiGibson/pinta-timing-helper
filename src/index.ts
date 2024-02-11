@@ -57,7 +57,7 @@ let itemTimingElements: TimingVisualizerDynamicElements;
 const pixelsPerSecond = 82;
 
 const canvasWidth = 200;
-const canvasHeight = 140;
+const canvasHeight = 70;
 
 const fftSize = 2048;
 const frequencyBinCount = fftSize / 2;

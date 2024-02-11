@@ -12,9 +12,11 @@
 /* TODO: mobile friendly */
 body {
     background-color: #143C4D;
+    display: flex;
+    justify-content: center;
 }
 
-.root {
+.panel {
     margin: 20px;
     padding: 10px;
     border-radius: 5px;
@@ -38,8 +40,12 @@ body {
 }
 
 .controls {
-    align-items: flex-end;
+    align-items: center;
     justify-content: flex-start;
+}
+
+#select-manips {
+    margin: 5px;
 }
 
 .column {
