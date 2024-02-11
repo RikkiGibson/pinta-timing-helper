@@ -1,0 +1,9 @@
+<?xml version="1.0" standalone="no"?>
+<svg width="20" height="20" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <!-- yellow center -->
+  <polyline points="0 0 20 0 10 20 0 0" fill="#f8b503" stroke-width="2"/>
+
+  <!-- blue outline -->
+  <polyline points="0 0 20 0" stroke="#297a9c" stroke-width="4" fill="none"/>
+  <polyline points="0 0 10 20 20 0" stroke="#297a9c" stroke-width="2" fill="none"/>
+</svg>
