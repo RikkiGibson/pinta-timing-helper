@@ -11,8 +11,14 @@
 /* TODO: use a nested container with a minimum size that can grow if needed */
 /* TODO: mobile friendly */
 body {
+    background-color: #143C4D;
+}
+
+.root {
+    margin: 20px;
+    padding: 10px;
+    border-radius: 5px;
     background-color: darkgray;
-    width: 500px;
 }
 
 .row {
