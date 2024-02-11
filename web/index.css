@@ -1,14 +1,15 @@
 
+/*
+    pinta colors
+*/
 :root {
     --pintaYellow: #f8b503;
     --pintaBlue: #297a9c;
     --pintaSilver: #cbcbcb;
 }
 
-/*
-    pinta colors
-*/
-
+/* TODO: use a nested container with a minimum size that can grow if needed */
+/* TODO: mobile friendly */
 body {
     background-color: darkgray;
     width: 500px;
