@@ -41,11 +41,11 @@ let canvas: HTMLCanvasElement;
 let canvasCtx: CanvasRenderingContext2D;
 
 interface TimingVisualizerDynamicElements {
-    timingLeadUpMeter: HTMLDivElement;
+    timingLeadUpMeter: { element: HTMLDivElement, time: number };
     timingMeterFilled: HTMLDivElement;
     timingCursor: HTMLDivElement;
     timingDescription: HTMLDivElement;
-    timingMeasureLeadUpInners: { element: HTMLDivElement, time: number }[];
+    timingMeasureIndicatorInners: { element: HTMLDivElement, time: number }[];
     timingLeadUpInners: HTMLDivElement[];
     timingTargetInner: HTMLDivElement;
 }
@@ -180,11 +180,11 @@ function ready() {
         const timingTargetInner = timingVisualizer.querySelector('.timing-target-inner') as HTMLDivElement;
 
         return {
-            timingLeadUpMeter,
+            timingLeadUpMeter: { element: timingLeadUpMeter, time: 0 },
             timingMeterFilled,
             timingDescription,
             timingCursor,
-            timingMeasureLeadUpInners: [],
+            timingMeasureIndicatorInners: [],
             timingLeadUpInners,
             timingTargetInner
         };
@@ -230,19 +230,18 @@ function adjustTimingMarkers() {
         // Clear previous "measure indicators" and repopulate if needed
         const timingMeter = timingVisualizer.querySelector<HTMLDivElement>('.timing-meter')!;
         timingMeter.querySelectorAll('.timing-measure-indicator').forEach(node => node.remove());
-        dynamicElements.timingMeasureLeadUpInners = [];
+        dynamicElements.timingMeasureIndicatorInners = [];
 
-        let leadUpTime: number;
         if (timingSeconds > beatTime * 6) {
-            leadUpTime = beatTime * 3;
-            insertMeasureIndicators(timingSeconds - leadUpTime);
+            dynamicElements.timingLeadUpMeter.time = beatTime * 3;
+            insertMeasureIndicators(timingSeconds - dynamicElements.timingLeadUpMeter.time);
         } else {
             // timing is short enough to just use the lead-up indicator to represent the whole timing
-            leadUpTime = timingSeconds;
+            dynamicElements.timingLeadUpMeter.time = timingSeconds;
         }
 
         const timingLeadUpMeter = timingVisualizer.querySelector<HTMLDivElement>('.timing-lead-up-meter')!;
-        timingLeadUpMeter.style.width = `${pixelsPerSecond * leadUpTime}px`;
+        timingLeadUpMeter.style.width = `${pixelsPerSecond * dynamicElements.timingLeadUpMeter.time}px`;
         timingLeadUpMeter.querySelectorAll('.timing-line').forEach(node => node.remove());
         
         // insert up to 4 lines to the last single beat
@@ -276,13 +275,13 @@ function adjustTimingMarkers() {
             firstMeasureIndicator.measureIndicator.style.width = size;
             firstMeasureIndicator.measureIndicator.style.height = size;
 
-            dynamicElements.timingMeasureLeadUpInners.push({ element: firstMeasureIndicator.inner, time: firstMeasureTime });
-            timingMeter.insertBefore(firstMeasureIndicator.measureIndicator, dynamicElements.timingLeadUpMeter);
+            dynamicElements.timingMeasureIndicatorInners.push({ element: firstMeasureIndicator.inner, time: firstMeasureTime });
+            timingMeter.insertBefore(firstMeasureIndicator.measureIndicator, dynamicElements.timingLeadUpMeter.element);
 
             while (remainingMeasureIndicatorsTime >= (beatTime * 4)) {
                 const measureIndicator = makeTimingMeasureIndicator();
-                dynamicElements.timingMeasureLeadUpInners.push({ element: measureIndicator.inner, time: beatTime * 4 });
-                timingMeter.insertBefore(measureIndicator.measureIndicator, dynamicElements.timingLeadUpMeter);
+                dynamicElements.timingMeasureIndicatorInners.push({ element: measureIndicator.inner, time: beatTime * 4 });
+                timingMeter.insertBefore(measureIndicator.measureIndicator, dynamicElements.timingLeadUpMeter.element);
                 remainingMeasureIndicatorsTime -= beatTime * 4;
             }
             if (remainingMeasureIndicatorsTime > 1e-5) {
@@ -341,7 +340,7 @@ function onFrame() {
     analyser.getByteFrequencyData(dataArray);
     drawFrequencyGraph(dataArray);
 
-    const { timingLeadUpMeter, timingLeadUpInners, timingTargetInner, timingMeterFilled, timingCursor } =
+    const { timingLeadUpMeter, timingLeadUpInners, timingTargetInner, timingMeasureIndicatorInners, timingMeterFilled, timingCursor } =
         cueMode == TimingCueMode.Event ? eventTimingElements : itemTimingElements;
     if (cueState == TimingCueState.CueingSecondTone || cueState == TimingCueState.HeardSecondTone) {
         const positionWithinMeasure = (pendingAt - audioContext.currentTime) % (beatTime * 4);
@@ -367,11 +366,29 @@ function onFrame() {
     }
 
     if (cueState == TimingCueState.CueingSecondTone) {
-        const percentageComplete = (itemManipDelta + audioContext.currentTime - timingStartAt) / getCurrentTimingSeconds();
-        const timingMeterWidth = timingLeadUpMeter.clientWidth;
-        const position = timingMeterWidth * percentageComplete;
-        timingMeterFilled.style.width = `${position}px`;
-        timingCursor.style.left = `${position - timingCursor.clientWidth / 2}px`;
+        // fill measures
+        let remainingTime = itemManipDelta + audioContext.currentTime - timingStartAt;
+        let i = 0;
+        for (const { element, time } of timingMeasureIndicatorInners) {
+            if (remainingTime < time) {
+                // not enough to fill this one
+                break;
+            }
+
+            element.classList.add('timing-measure-indicator-hit');
+            remainingTime -= time;
+            i++;
+        }
+
+        if (i == timingMeasureIndicatorInners.length) {
+            // filled all the measure indicators, start filling the lead up meter
+            const percentageComplete = remainingTime / timingLeadUpMeter.time;
+            const timingMeterWidth = timingLeadUpMeter.element.clientWidth;
+            const position = timingMeterWidth * percentageComplete;
+            timingMeterFilled.style.width = `${position}px`;
+            timingCursor.style.left = `${position - timingCursor.clientWidth / 2}px`;
+        }
+
     }
 
     if (detectFingerprint(gameStartFingerprint)) {
@@ -393,10 +410,11 @@ function onFrame() {
 }
 
 function reset() {
-    for (const { timingMeterFilled, timingDescription, timingLeadUpInners, timingTargetInner } of [eventTimingElements, itemTimingElements]) {
+    for (const { timingMeterFilled, timingDescription, timingMeasureIndicatorInners, timingLeadUpInners, timingTargetInner } of [eventTimingElements, itemTimingElements]) {
         timingMeterFilled.style.width = '0';
         timingDescription.innerText = '';
         timingLeadUpInners.forEach((elem) => elem.classList.remove('timing-hit'));
+        timingMeasureIndicatorInners.forEach((elem) => elem.element.classList.remove('timing-measure-indicator-hit'));
         timingTargetInner.classList.remove('timing-hit');
     }
     eventTimingElements.timingCursor.classList.remove('hidden');
@@ -410,7 +428,7 @@ function reset() {
 }
 
 function transitionCueState(nextState: TimingCueState) {
-    const { timingLeadUpInners, timingTargetInner, timingMeterFilled, timingCursor, timingDescription } =
+    const { timingLeadUpInners, timingTargetInner, timingMeasureIndicatorInners, timingMeterFilled, timingCursor, timingDescription } =
         cueMode == TimingCueMode.Event ? eventTimingElements : itemTimingElements;
 
     if (nextState == TimingCueState.AwaitingFirstTone) {
@@ -418,12 +436,15 @@ function transitionCueState(nextState: TimingCueState) {
         timingDescription.innerText = '';
         timingCursor.style.left = `${-timingCursor.clientWidth / 2}px`;
         timingLeadUpInners.forEach((elem) => elem.classList.remove('timing-hit'));
+        timingMeasureIndicatorInners.forEach((elem) => elem.element.classList.remove('timing-measure-indicator-hit'));
         timingTargetInner.classList.remove('timing-hit');
         if (cueMode == TimingCueMode.Event) {
             timingCursor.classList.add('hidden');
             // TODO: extract this remove-hidden, rationalize the way we recenter this element after showing it
             itemTimingElements.timingCursor.classList.remove('hidden');
-            itemTimingElements.timingCursor.style.left = `${itemManipDelta * pixelsPerSecond - itemTimingElements.timingCursor.clientWidth / 2}px`;
+            // when no measure indicators, can offset the cursor based on previous cue error.
+            // But when there *are* measure indicators it's confusing/not necessary.
+            itemTimingElements.timingCursor.style.left = `${(timingMeasureIndicatorInners.length == 0 ? itemManipDelta * pixelsPerSecond : 0) - itemTimingElements.timingCursor.clientWidth / 2}px`;
             itemTimingElements.timingDescription.innerText = itemManipDelta == 0 ? '' : `${itemManipDelta < 0 ? '-' : '+'}${Math.trunc(Math.abs(itemManipDelta*1000))}ms`;
             cueMode = TimingCueMode.Item;
         } else {
