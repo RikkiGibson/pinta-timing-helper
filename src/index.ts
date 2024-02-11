@@ -267,7 +267,7 @@ function adjustTimingMarkers() {
             
             // reduce the area of the circle by the percentage
             // ignore pi, it's just proportional to square of radius
-            const baseArea = 20 * 20;
+            const baseArea = 16 * 16;
             const newArea = baseArea * percentage;
             const newRadius = Math.round(Math.sqrt(newArea));
 
