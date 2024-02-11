@@ -440,7 +440,7 @@ function transitionCueState(nextState: TimingCueState) {
             itemTimingElements.timingCursor.classList.remove('hidden');
             // when no measure indicators, can offset the cursor based on previous cue error.
             // But when there *are* measure indicators it's confusing/not necessary.
-            itemTimingElements.timingCursor.style.left = `${(timingMeasureIndicators.length == 0 ? itemManipDelta * pixelsPerSecond : 0) - itemTimingElements.timingCursor.clientWidth / 2}px`;
+            itemTimingElements.timingCursor.style.left = `${(itemTimingElements.timingMeasureIndicators.length == 0 ? itemManipDelta * pixelsPerSecond : 0) - itemTimingElements.timingCursor.clientWidth / 2}px`;
             itemTimingElements.timingDescription.innerText = itemManipDelta == 0 ? '' : `${itemManipDelta < 0 ? '-' : '+'}${Math.trunc(Math.abs(itemManipDelta*1000))}ms`;
             cueMode = TimingCueMode.Item;
         } else {
