@@ -41,10 +41,10 @@ let canvas: HTMLCanvasElement;
 let canvasCtx: CanvasRenderingContext2D;
 
 interface TimingVisualizerDynamicElements {
-    timingMeter: HTMLDivElement;
+    timingLeadUpMeter: HTMLDivElement;
+    timingMeterFilled: HTMLDivElement;
     timingCursor: HTMLDivElement;
-    timingHitMarker: HTMLDivElement;
-    timingHitDescription: HTMLDivElement;
+    timingDescription: HTMLDivElement;
     timingLeadUpInners: HTMLDivElement[];
     timingTargetInner: HTMLDivElement;
 }
@@ -141,7 +141,7 @@ function ready() {
 
     eventTimingElements = getTimingVisualizerElements(document.getElementById('event-timing-visualizer')!);
     itemTimingElements = getTimingVisualizerElements(document.getElementById('item-timing-visualizer')!);
-    itemTimingElements.timingHitMarker.classList.add('hidden');
+    itemTimingElements.timingCursor.classList.add('hidden');
 
     selectItemTiming = document.getElementById('select-manips') as HTMLSelectElement;
     for (const option of itemTimingOptionValues) {
@@ -168,21 +168,21 @@ function ready() {
     canvasCtx.fillRect(0, 0, canvasWidth, canvasHeight);
 
     function getTimingVisualizerElements(timingVisualizer: HTMLElement): TimingVisualizerDynamicElements {
-        const timingMeter = timingVisualizer.querySelector('.timing-meter') as HTMLDivElement;
-        const timingCursor = timingVisualizer.querySelector('.timing-cursor') as HTMLDivElement;
+        const timingLeadUpMeter = timingVisualizer.querySelector('.timing-lead-up-meter') as HTMLDivElement;
+        const timingMeterFilled = timingVisualizer.querySelector('.timing-meter-filled') as HTMLDivElement;
 
-        const timingHitMarker = timingVisualizer.querySelector('.timing-hit-marker') as HTMLDivElement;
-        timingHitMarker.style.left = `${-timingHitMarker.clientWidth / 2}px`;
+        const timingCursor = timingVisualizer.querySelector('.timing-hit-marker') as HTMLDivElement;
+        timingCursor.style.left = `${-timingCursor.clientWidth / 2}px`;
 
-        const timingHitDescription = timingVisualizer.querySelector('.timing-hit-description') as HTMLDivElement;
+        const timingDescription = timingVisualizer.querySelector('.timing-description') as HTMLDivElement;
         const timingLeadUpInners = [...timingVisualizer.querySelectorAll<HTMLDivElement>('.timing-lead-up-inner')];
         const timingTargetInner = timingVisualizer.querySelector('.timing-target-inner') as HTMLDivElement;
 
         return {
-            timingMeter,
+            timingLeadUpMeter,
+            timingMeterFilled,
+            timingDescription,
             timingCursor,
-            timingHitDescription,
-            timingHitMarker,
             timingLeadUpInners,
             timingTargetInner
         };
@@ -222,7 +222,7 @@ function adjustTimingMarkers() {
 
     function adjustTimingMarkers1(timingSeconds: number, timingVisualizer: HTMLElement) {
         const width = `${pixelsPerSecond * timingSeconds}px`;
-        const timingMeter = timingVisualizer.querySelector<HTMLDivElement>('.timing-meter')!;
+        const timingMeter = timingVisualizer.querySelector<HTMLDivElement>('.timing-lead-up-meter')!;
         timingMeter.style.width = width;
         const timingIconsRow = timingVisualizer.querySelector<HTMLDivElement>('.timing-icons')!;
         timingIconsRow.style.width = width;
@@ -294,7 +294,7 @@ function onFrame() {
     analyser.getByteFrequencyData(dataArray);
     drawFrequencyGraph(dataArray);
 
-    const { timingMeter, timingLeadUpInners, timingTargetInner, timingCursor, timingHitMarker } =
+    const { timingLeadUpMeter, timingLeadUpInners, timingTargetInner, timingMeterFilled, timingCursor } =
         cueMode == TimingCueMode.Event ? eventTimingElements : itemTimingElements;
     if (cueState == TimingCueState.CueingSecondTone || cueState == TimingCueState.HeardSecondTone) {
         const positionWithinMeasure = (pendingAt - audioContext.currentTime) % (beatTime * 4);
@@ -321,10 +321,10 @@ function onFrame() {
 
     if (cueState == TimingCueState.CueingSecondTone) {
         const percentageComplete = (itemManipDelta + audioContext.currentTime - timingStartAt) / getCurrentTimingSeconds();
-        const timingMeterWidth = timingMeter.clientWidth;
+        const timingMeterWidth = timingLeadUpMeter.clientWidth;
         const position = timingMeterWidth * percentageComplete;
-        timingCursor.style.width = `${position}px`;
-        timingHitMarker.style.left = `${position - timingHitMarker.clientWidth / 2}px`;
+        timingMeterFilled.style.width = `${position}px`;
+        timingCursor.style.left = `${position - timingCursor.clientWidth / 2}px`;
     }
 
     if (detectFingerprint(gameStartFingerprint)) {
@@ -346,15 +346,15 @@ function onFrame() {
 }
 
 function reset() {
-    for (const { timingCursor, timingHitDescription, timingLeadUpInners, timingTargetInner } of [eventTimingElements, itemTimingElements]) {
-        timingCursor.style.width = '0';
-        timingHitDescription.innerText = '';
+    for (const { timingMeterFilled, timingDescription, timingLeadUpInners, timingTargetInner } of [eventTimingElements, itemTimingElements]) {
+        timingMeterFilled.style.width = '0';
+        timingDescription.innerText = '';
         timingLeadUpInners.forEach((elem) => elem.classList.remove('timing-hit'));
         timingTargetInner.classList.remove('timing-hit');
     }
-    eventTimingElements.timingHitMarker.classList.remove('hidden');
-    eventTimingElements.timingHitMarker.style.left = `${-eventTimingElements.timingHitMarker.clientWidth / 2}px`;
-    itemTimingElements.timingHitMarker.classList.add('hidden');
+    eventTimingElements.timingCursor.classList.remove('hidden');
+    eventTimingElements.timingCursor.style.left = `${-eventTimingElements.timingCursor.clientWidth / 2}px`;
+    itemTimingElements.timingCursor.classList.add('hidden');
     cueMode = TimingCueMode.Event;
     cueState = TimingCueState.AwaitingFirstTone;
     timingStartAt = 0;
@@ -363,29 +363,29 @@ function reset() {
 }
 
 function transitionCueState(nextState: TimingCueState) {
-    const { timingLeadUpInners, timingTargetInner, timingCursor, timingHitMarker, timingHitDescription } =
+    const { timingLeadUpInners, timingTargetInner, timingMeterFilled, timingCursor, timingDescription } =
         cueMode == TimingCueMode.Event ? eventTimingElements : itemTimingElements;
 
     if (nextState == TimingCueState.AwaitingFirstTone) {
-        timingCursor.style.width = '0';
-        timingHitDescription.innerText = '';
-        timingHitMarker.style.left = `${-timingHitMarker.clientWidth / 2}px`;
+        timingMeterFilled.style.width = '0';
+        timingDescription.innerText = '';
+        timingCursor.style.left = `${-timingCursor.clientWidth / 2}px`;
         timingLeadUpInners.forEach((elem) => elem.classList.remove('timing-hit'));
         timingTargetInner.classList.remove('timing-hit');
         if (cueMode == TimingCueMode.Event) {
-            timingHitMarker.classList.add('hidden');
+            timingCursor.classList.add('hidden');
             // TODO: extract this remove-hidden, rationalize the way we recenter this element after showing it
-            itemTimingElements.timingHitMarker.classList.remove('hidden');
-            itemTimingElements.timingHitMarker.style.left = `${itemManipDelta * pixelsPerSecond - itemTimingElements.timingHitMarker.clientWidth / 2}px`;
-            itemTimingElements.timingHitDescription.innerText = itemManipDelta == 0 ? '' : `${itemManipDelta < 0 ? '-' : '+'}${Math.trunc(Math.abs(itemManipDelta*1000))}ms`;
+            itemTimingElements.timingCursor.classList.remove('hidden');
+            itemTimingElements.timingCursor.style.left = `${itemManipDelta * pixelsPerSecond - itemTimingElements.timingCursor.clientWidth / 2}px`;
+            itemTimingElements.timingDescription.innerText = itemManipDelta == 0 ? '' : `${itemManipDelta < 0 ? '-' : '+'}${Math.trunc(Math.abs(itemManipDelta*1000))}ms`;
             cueMode = TimingCueMode.Item;
         } else {
-            timingHitMarker.classList.add('hidden');
-            eventTimingElements.timingHitMarker.classList.remove('hidden');
+            timingCursor.classList.add('hidden');
+            eventTimingElements.timingCursor.classList.remove('hidden');
             cueMode = TimingCueMode.Event;
         }
     } else if (nextState == TimingCueState.CueingSecondTone) {
-        timingHitDescription.innerText = '';
+        timingDescription.innerText = '';
         timingStartAt = audioContext.currentTime;
         const currentTimingSeconds = getCurrentTimingSeconds();
         pendingAt = timingStartAt + currentTimingSeconds - itemManipDelta;
@@ -401,7 +401,7 @@ function transitionCueState(nextState: TimingCueState) {
             // don't carry the difference on item timing thru to event timing
             itemManipDelta = 0;
         }
-        timingHitDescription.innerText = `${difference < 0 ? '-' : '+'}${Math.trunc(Math.abs(difference*1000))}ms`;
+        timingDescription.innerText = `${difference < 0 ? '-' : '+'}${Math.trunc(Math.abs(difference*1000))}ms`;
         console.log(`Heard second tone at ${audioContext.currentTime} (expected at ${pendingAt})`);
     }
     cueState = nextState;

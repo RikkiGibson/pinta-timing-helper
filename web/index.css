@@ -46,6 +46,13 @@ body {
 }
 
 .timing-meter {
+    display: flex;
+    flex-direction: row;
+}
+
+.timing-lead-up-meter {
+    display: flex;
+    flex-direction: row;
     background-color: var(--pintaBlue);
     border: solid 1px var(--pintaSilver);
     position: relative;
@@ -98,14 +105,14 @@ body {
     align-items: center;
 }
 
-.timing-hit-icon {
+.timing-cursor {
     clip-path: polygon(0% 100%, 100% 100%, 50% 0%);
     background-color: red;
     width: 20px;
     height: 20px;
 }
 
-.timing-hit-description {
+.timing-description {
     margin-left: 2px;
     font-size: small;
     font: bold small sans-serif;
@@ -115,7 +122,7 @@ body {
     height: 20px;
 }
 
-.timing-cursor {
+.timing-meter-filled {
     background-color: #f8b503;
     height: 20px;
     width: 0px;
