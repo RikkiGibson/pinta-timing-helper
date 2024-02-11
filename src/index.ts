@@ -45,6 +45,7 @@ interface TimingVisualizerDynamicElements {
     timingMeterFilled: HTMLDivElement;
     timingCursor: HTMLDivElement;
     timingDescription: HTMLDivElement;
+    timingMeasureLeadUpInners: { element: HTMLDivElement, time: number }[];
     timingLeadUpInners: HTMLDivElement[];
     timingTargetInner: HTMLDivElement;
 }
@@ -183,6 +184,7 @@ function ready() {
             timingMeterFilled,
             timingDescription,
             timingCursor,
+            timingMeasureLeadUpInners: [],
             timingLeadUpInners,
             timingTargetInner
         };
@@ -213,46 +215,87 @@ function adjustTimingMarkers() {
     // event timing
     adjustTimingMarkers1(
         eventTimingOptions[selectedItemTiming.event],
-        document.getElementById("event-timing-visualizer")!);
+        document.getElementById("event-timing-visualizer")!,
+        eventTimingElements);
 
     // item timing
     adjustTimingMarkers1(
         selectedItemTiming.timingSeconds,
-        document.getElementById("item-timing-visualizer")!);
+        document.getElementById("item-timing-visualizer")!,
+        itemTimingElements);
 
-    function adjustTimingMarkers1(timingSeconds: number, timingVisualizer: HTMLElement) {
-        const width = `${pixelsPerSecond * timingSeconds}px`;
-        const timingMeter = timingVisualizer.querySelector<HTMLDivElement>('.timing-lead-up-meter')!;
-        timingMeter.style.width = width;
-        const timingIconsRow = timingVisualizer.querySelector<HTMLDivElement>('.timing-icons')!;
-        timingIconsRow.style.width = width;
+    function adjustTimingMarkers1(timingSeconds: number, timingVisualizer: HTMLElement, dynamicElements: TimingVisualizerDynamicElements) {
         const beatWidth = pixelsPerSecond * beatTime;
 
-        timingMeter.querySelectorAll('.timing-line').forEach(node => node.remove());
+        // Clear prevous "measure indicators" and repopulate if needed
+        const timingMeter = timingVisualizer.querySelector<HTMLDivElement>('.timing-meter')!;
+        timingMeter.querySelectorAll('.timing-measure-indicator').forEach(node => node.remove());
+        dynamicElements.timingMeasureLeadUpInners = [];
 
+        let leadUpTime: number;
+        if (timingSeconds > beatTime * 6) {
+            leadUpTime = beatTime * 3;
+            insertMeasureIndicators(timingSeconds - leadUpTime);
+        } else {
+            // timing is short enough to just use the lead-up indicator to represent the whole timing
+            leadUpTime = timingSeconds;
+        }
+
+        const timingLeadUpMeter = timingVisualizer.querySelector<HTMLDivElement>('.timing-lead-up-meter')!;
+        timingLeadUpMeter.style.width = `${pixelsPerSecond * leadUpTime}px`;
+        timingLeadUpMeter.querySelectorAll('.timing-line').forEach(node => node.remove());
+        
         // insert up to 4 lines to the last single beat
         for (let currentTime = 0; currentTime < beatTime * 4; currentTime += beatTime) {
             const line = makeTimingLine();
-            timingMeter.appendChild(line);
-            const position = currentTime * pixelsPerSecond - line.clientWidth / 2;
-            line.style.right = `${position}px`;
-        }
-        
-        // insert one line per measure thru to the left end
-        // Reduce the time "from the right" by a little because it looks weird to have a line too close to the start
-        const maxTime = timingSeconds - beatTime * .1;
-        for (let currentTime = beatTime * 7; currentTime < maxTime; currentTime += beatTime * 4) {
-            const line = makeTimingLine();
-            timingMeter.appendChild(line);
+            timingLeadUpMeter.appendChild(line);
             const position = currentTime * pixelsPerSecond - line.clientWidth / 2;
             line.style.right = `${position}px`;
         }
 
+        // TODO: put the timing lead ups and timing cursor inside the timing lead up meter.
+        // absolute positioning relative to the timing lead up meter should be much easier this way.
+
+
+        //const timingIconsRow = timingVisualizer.querySelector<HTMLDivElement>('.timing-icons')!;
+        //timingIconsRow.style.width = timingMeter.style.width;
+        
         const timingIcons = timingVisualizer.querySelectorAll<HTMLElement>('.timing-icon');
         timingIcons[0].style.right = `${beatWidth * 3 - timingIcons[0].clientWidth / 2}px`;
         timingIcons[1].style.right = `${beatWidth * 2 - timingIcons[1].clientWidth / 2}px`;
         timingIcons[2].style.right = `${beatWidth - timingIcons[2].clientWidth / 2}px`;
         timingIcons[3].style.right = `${-timingIcons[3].clientWidth / 2}px`;
+
+        function insertMeasureIndicators(remainingMeasureIndicatorsTime: number) {
+            const firstMeasureTime = remainingMeasureIndicatorsTime % (beatTime * 4);
+            remainingMeasureIndicatorsTime -= firstMeasureTime;
+
+            const firstMeasureIndicator = makeTimingMeasureIndicator();
+            const percentage = firstMeasureTime / (beatTime * 4);
+            
+            // reduce the area of the circle by the percentage
+            // ignore pi, it's just proportional to square of radius
+            const baseArea = 20 * 20;
+            const newArea = baseArea * percentage;
+            const newRadius = Math.round(Math.sqrt(newArea));
+
+            const size = `${newRadius}px`;
+            firstMeasureIndicator.measureIndicator.style.width = size;
+            firstMeasureIndicator.measureIndicator.style.height = size;
+
+            dynamicElements.timingMeasureLeadUpInners.push({ element: firstMeasureIndicator.inner, time: firstMeasureTime });
+            timingMeter.insertBefore(firstMeasureIndicator.measureIndicator, dynamicElements.timingLeadUpMeter);
+
+            while (remainingMeasureIndicatorsTime >= (beatTime * 4)) {
+                const measureIndicator = makeTimingMeasureIndicator();
+                dynamicElements.timingMeasureLeadUpInners.push({ element: measureIndicator.inner, time: beatTime * 4 });
+                timingMeter.insertBefore(measureIndicator.measureIndicator, dynamicElements.timingLeadUpMeter);
+                remainingMeasureIndicatorsTime -= beatTime * 4;
+            }
+            if (remainingMeasureIndicatorsTime > 1e-5) {
+                throw new Error(`Too much remaining measure indicators time '${remainingMeasureIndicatorsTime}'.`);
+            }
+        }
     }
 
     function makeTimingLine(): HTMLDivElement {
@@ -262,10 +305,22 @@ function adjustTimingMarkers() {
     }
 }
 
+function makeTimingMeasureIndicator(): { measureIndicator: HTMLDivElement, inner: HTMLDivElement } {
+    const measureIndicator = document.createElement('div');
+    measureIndicator.classList.add('timing-measure-indicator');
+    measureIndicator.classList.add('timing-icon');
+    
+    const inner = document.createElement('div');
+    inner.classList.add('timing-measure-indicator-inner');
+    measureIndicator.appendChild(inner);
+
+    return { measureIndicator, inner };
+}
+
 async function startOrStop() {
     if (running) {
         running = false;
-        audioContext.close();
+        await audioContext.close();
         audioContext = null!;
         reset();
         return;
@@ -459,7 +514,7 @@ let debug = false;
 let savedPeaks: { peaks: Peak[], dataArray: Uint8Array }[] = [];
 
 function debugIndex(index: number, fingerprint?: any) {
-    if (!debug) throw "Set 'debug = true' first";
+    if (!debug) throw new Error("Set 'debug = true' first");
 
     dataArray = savedPeaks[index].dataArray;
     drawFrequencyGraph(dataArray);
@@ -531,7 +586,7 @@ function detectFingerprint(fingerprint: { frequency: number, amplitude: number }
         }
 
         if (!currentMatchingPeak && !previousMatchingPeak) {
-            throw "Found neither a currentMatchingPeak or a previousMatchingPeak but didn't return in earlier checks";
+            throw new Error("Found neither a currentMatchingPeak or a previousMatchingPeak but didn't return in earlier checks");
         }
 
         if (previousMatchingPeak && currentMatchingPeak) {

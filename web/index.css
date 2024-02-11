@@ -48,6 +48,7 @@ body {
 .timing-meter {
     display: flex;
     flex-direction: row;
+    align-items: center;
 }
 
 .timing-lead-up-meter {
@@ -56,6 +57,21 @@ body {
     background-color: var(--pintaBlue);
     border: solid 1px var(--pintaSilver);
     position: relative;
+}
+
+.timing-measure-indicator {
+    height: 20px;
+    width: 20px;
+    margin: 0px 5px;
+    background-color: var(--pintaBlue);
+    border-radius: 50%;
+}
+
+.timing-measure-indicator-hit {
+    border-radius: 50%;
+    background-color: var(--pintaYellow);
+    width: 70%;
+    height: 70%;
 }
 
 .timing-line {
