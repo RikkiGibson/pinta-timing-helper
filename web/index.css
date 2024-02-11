@@ -57,6 +57,7 @@ body {
     background-color: var(--pintaBlue);
     border: solid 1px var(--pintaSilver);
     position: relative;
+    margin: 0 5px;
 }
 
 .timing-measure-indicator {
