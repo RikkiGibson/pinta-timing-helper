@@ -227,7 +227,7 @@ function adjustTimingMarkers() {
     function adjustTimingMarkers1(timingSeconds: number, timingVisualizer: HTMLElement, dynamicElements: TimingVisualizerDynamicElements) {
         const beatWidth = pixelsPerSecond * beatTime;
 
-        // Clear prevous "measure indicators" and repopulate if needed
+        // Clear previous "measure indicators" and repopulate if needed
         const timingMeter = timingVisualizer.querySelector<HTMLDivElement>('.timing-meter')!;
         timingMeter.querySelectorAll('.timing-measure-indicator').forEach(node => node.remove());
         dynamicElements.timingMeasureLeadUpInners = [];
@@ -252,13 +252,6 @@ function adjustTimingMarkers() {
             const position = currentTime * pixelsPerSecond - line.clientWidth / 2;
             line.style.right = `${position}px`;
         }
-
-        // TODO: put the timing lead ups and timing cursor inside the timing lead up meter.
-        // absolute positioning relative to the timing lead up meter should be much easier this way.
-
-
-        //const timingIconsRow = timingVisualizer.querySelector<HTMLDivElement>('.timing-icons')!;
-        //timingIconsRow.style.width = timingMeter.style.width;
         
         const timingIcons = timingVisualizer.querySelectorAll<HTMLElement>('.timing-icon');
         timingIcons[0].style.right = `${beatWidth * 3 - timingIcons[0].clientWidth / 2}px`;
@@ -308,7 +301,6 @@ function adjustTimingMarkers() {
 function makeTimingMeasureIndicator(): { measureIndicator: HTMLDivElement, inner: HTMLDivElement } {
     const measureIndicator = document.createElement('div');
     measureIndicator.classList.add('timing-measure-indicator');
-    measureIndicator.classList.add('timing-icon');
     
     const inner = document.createElement('div');
     inner.classList.add('timing-measure-indicator-inner');

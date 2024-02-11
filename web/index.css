@@ -65,6 +65,9 @@ body {
     margin: 0px 5px;
     background-color: var(--pintaBlue);
     border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .timing-measure-indicator-hit {
@@ -95,6 +98,7 @@ body {
 .timing-lead-up {
     clip-path: polygon(0% 0%, 100% 0%, 50% 100%);
     position: absolute;
+    bottom: 30px;
     height: 17px;
     width: 17px;
     background-color: var(--pintaBlue);
@@ -103,6 +107,7 @@ body {
 .timing-target {
     clip-path: polygon(0% 0%, 100% 0%, 50% 100%);
     position: absolute;
+    bottom: 30px;
     height: 20px;
     width: 20px;
     background-color: var(--pintaBlue);
@@ -119,6 +124,7 @@ body {
     position: absolute;
     display: flex;
     align-items: center;
+    top: 30px;
 }
 
 .timing-cursor {
