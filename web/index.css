@@ -8,8 +8,6 @@
     --pintaSilver: #cbcbcb;
 }
 
-/* TODO: use a nested container with a minimum size that can grow if needed */
-/* TODO: mobile friendly */
 body {
     background-color: #143C4D;
     display: flex;
