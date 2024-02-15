@@ -522,12 +522,12 @@ function getSampleRate(): number {
 let debug = false;
 let savedPeaks: { peaks: Peak[], dataArray: Uint8Array }[] = [];
 
-function debugIndex(index: number, fingerprint?: any) {
+function debugIndex(index: number, fingerprint?: any): boolean {
     if (!debug) throw new Error("Set 'debug = true' first");
 
     dataArray = savedPeaks[index].dataArray;
     drawFrequencyGraph(dataArray);
-    detectFingerprint(fingerprint || foundItemFingerprint);
+    return detectFingerprint(fingerprint || foundItemFingerprint);
 }
 
 function detectTone(): boolean {
@@ -618,9 +618,13 @@ function detectFingerprint(fingerprint: { frequency: number, amplitude: number }
         // -for each known peak k, scan and see the previous known peak, or nothing, thus determining a frequency range in the input signal to scan, and a largestKnownPeak
         // -for each input frequency in this range, scan the amplitudes to ensure that all are smaller than largestKnownPeak.amplitude.
         // -TODO: Generally the amplitude of higher harmonics will decay, perhaps we can require this. e.g. on the last matching peak, require that no subsequent peak is higher.
-        if (previousMatchingPeak && currentMatchingPeak) {
+        if (previousMatchingPeak) {
             const startIndex = previousMatchingPeak.index + 1;
-            const endIndex = currentMatchingPeak.index - 1;
+
+            // For the last peak of the fingerprint, verify that no higher-frequency harmonics have higher amplitude
+            // If they did, this would go against our expectations for the harmonic signature of a square wave.
+            const endIndex = currentMatchingPeak ? currentMatchingPeak.index - 1 : frequencyBinCount;
+
             for (const peak of peaks) {
                 if (peak.index < startIndex) {
                     continue;
