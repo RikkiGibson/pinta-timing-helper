@@ -339,23 +339,23 @@ function onFrame() {
     const { timingLeadUpMeter, timingLeadUps, timingTarget, timingMeasureIndicators, timingMeterFilled, timingCursor } =
         cueMode == TimingCueMode.Event ? eventTimingElements : itemTimingElements;
     if (cueState == TimingCueState.CueingSecondTone || cueState == TimingCueState.HeardSecondTone) {
-        const positionWithinMeasure = (pendingAt - audioContext.currentTime) % (beatTime * 4);
-        if (Math.abs(positionWithinMeasure - beatTime * 3) <= frameTime) {
+        const remainingTime = pendingAt - audioContext.currentTime;
+        // we target beat 4 with our timings, not beat 1, so we want to shift the remainingTime forward by a beat before we take the remainder.
+        const remainingInMeasure = (remainingTime + beatTime) % (beatTime * 4);
+        const progressInMeasure = beatTime * 4 - remainingInMeasure;
+        if (progressInMeasure < beatTime) {
             timingTarget.classList.remove('timing-hit');
             timingLeadUps[0].classList.add('timing-hit');
         }
-
-        if (Math.abs(positionWithinMeasure - beatTime * 2) <= frameTime) {
+        else if (progressInMeasure < beatTime * 2) {
             timingLeadUps[0].classList.remove('timing-hit');
             timingLeadUps[1].classList.add('timing-hit');
         }
-        
-        if (Math.abs(positionWithinMeasure - beatTime * 1) <= frameTime) {
+        else if (progressInMeasure < beatTime * 3) {
             timingLeadUps[1].classList.remove('timing-hit');
             timingLeadUps[2].classList.add('timing-hit');
         }
-        
-        if (Math.abs(positionWithinMeasure) <= frameTime) {
+        else {
             timingLeadUps[2].classList.remove('timing-hit');
             timingTarget.classList.add('timing-hit');
         }
