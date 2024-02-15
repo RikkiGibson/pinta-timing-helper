@@ -37,6 +37,10 @@ body {
     background-color: var(--pintaBlue);
 }
 
+.header-image img {
+    height: 100px;
+}
+
 .controls {
     align-items: center;
     justify-content: flex-start;
