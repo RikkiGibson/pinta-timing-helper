@@ -244,8 +244,8 @@ function adjustTimingMarkers() {
         timingLeadUpMeter.style.width = `${pixelsPerSecond * dynamicElements.timingLeadUpMeter.time}px`;
         timingLeadUpMeter.querySelectorAll('.timing-line').forEach(node => node.remove());
         
-        // insert up to 4 lines to the last single beat
-        for (let currentTime = 0; currentTime < beatTime * 4; currentTime += beatTime) {
+        // insert line per each beat of the lead up meter
+        for (let currentTime = 0; currentTime < dynamicElements.timingLeadUpMeter.time; currentTime += beatTime) {
             const line = makeTimingLine();
             timingLeadUpMeter.appendChild(line);
             const position = currentTime * pixelsPerSecond - line.clientWidth / 2;
