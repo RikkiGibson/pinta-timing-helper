@@ -21,6 +21,12 @@ body {
     background-color: darkgray;
 }
 
+@media (max-height: 600px) {
+    .panel {
+        margin: 0;
+    }
+}
+
 .row {
     display: flex;
     margin: 5px;
