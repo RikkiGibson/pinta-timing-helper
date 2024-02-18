@@ -8,6 +8,10 @@
     --pintaSilver: #cbcbcb;
 }
 
+html {
+    touch-action: manipulation;
+}
+
 body {
     background-color: #143C4D;
     display: flex;
