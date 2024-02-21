@@ -117,6 +117,7 @@ const itemTimingOptionValues: ItemTiming[] = [
     { event: 'foundItem', name: 'Wind Gem / Eye of Truth', timingSeconds: 1.55 }, // 🔉🛑🛑🅰️
 
     { event: 'tradeShip', name: 'Trade 3B->4B', timingSeconds: 2.19 }, // 🔉🛑🛑🛑|🛑🅰️
+    { event: 'tradeShip', name: 'Trade 1B->4C', timingSeconds: 1.30 }, // 🔉🛑🛑🅰️
 
     //{ event: 'tradeShip', name: 'Trade 3B->1A', timingSeconds: 4.47 }, // 🔉🛑🛑🛑|🛑🅰️ 4.36 is idol minus one measure. 4.4 is idol minus "almost one measure".
 ];
