@@ -564,22 +564,15 @@ function detectFingerprint(fingerprint: { frequency: number, amplitude: number }
         const currentKnownPeak = i == fingerprint.length ? null : fingerprint[i];
         const previousKnownPeak = i == 0 ? null : fingerprint[i-1];
         /**
-          k--------
-          |   u        u
-          |   |     ---|----k
-          |   |    k   |    |
-          |   |    |   |    |
+                   k
+              u    |
+          k---|----|--------k
+          |   |    |        |
+          |   |    |   u    |
           |   |    |   |    |
           k = "known peak" in signal, matching a fingerprint peak
           u = "unknown peak" in signal, not matching a fingerprint peak
           in the above, the first 'u' is good, the second 'u' is bad.
-
-          All peaks in the incoming signal must meet the following:
-          find the nearest "known peak" in the fingerprint which is lower in frequency kl, and the nearest which is higher in frequency kh
-          take the higher of these two "known peaks". call it "largerKnownPeak".
-          if no known peak exists with lower frequency, then treat the higher-frequency peak as larger, and same with if no known peak with higher frequency exists, take the lower-frequency peak as larger.
-          for each unknown peak u, where kl.frequency < u < kh.frequency,
-          largerKnownPeak.amplitude must be > than u.amplitude.
         */
 
         const frequencyTolerance = 2 * getSampleRate() / frequencyBinCount;
@@ -614,10 +607,6 @@ function detectFingerprint(fingerprint: { frequency: number, amplitude: number }
                 ? currentMatchingPeak
                 : previousMatchingPeak;
 
-        // we should be able to determine this by:
-        // -for each known peak k, scan and see the previous known peak, or nothing, thus determining a frequency range in the input signal to scan, and a largestKnownPeak
-        // -for each input frequency in this range, scan the amplitudes to ensure that all are smaller than largestKnownPeak.amplitude.
-        // -TODO: Generally the amplitude of higher harmonics will decay, perhaps we can require this. e.g. on the last matching peak, require that no subsequent peak is higher.
         if (previousMatchingPeak) {
             const startIndex = previousMatchingPeak.index + 1;
 
