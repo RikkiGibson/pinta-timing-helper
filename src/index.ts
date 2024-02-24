@@ -103,15 +103,15 @@ const eventTimingOptions = {
 // e.g. maybe you need 3B->4B trades. Let's keep Found B Item next to that.
 interface ItemTiming { event: 'foundItem' | 'tradeShip', name: string, timingSeconds: number };
 
-// TODO: the exact timings to use here seem to depend on your mic.
-// Perhaps include a "timing fine tuner" setting to add +/-30ms or so.
+// The timings drift in PQ itself over time.
+// The drift seems to be over a range of about 100-200ms, back and forth, gradually.
+// Ideally the timings in here would be at around the midpoint of the real target range.
+// some, like Trade 3B->4B, seem to tend toward being hit late, though.
 const itemTimingOptionValues: ItemTiming[] = [
     { event: 'foundItem', name: 'B Item', timingSeconds: 3.43 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🅰️
     
     { event: 'foundItem', name: 'Idol / Hat / Berzerker', timingSeconds: 6.1 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
-    
-    // been hitting this between -80 and -9ms. Should this be moved earlier..?
-    // have to make sure that a highly responsive mic is used when tuning/testing these.
+
     { event: 'foundItem', name: 'Moonberry / Con Gem', timingSeconds: 4.48 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
     
     { event: 'foundItem', name: 'Wind Gem / Eye of Truth', timingSeconds: 1.55 }, // 🔉🛑🛑🅰️
@@ -389,8 +389,6 @@ function onFrame() {
     }
 
     if (detectFingerprint(gameStartFingerprint)) {
-        // TODO: we could include a timer here which indicates the earliest time that the "response beep" for the found item event could occur
-        // This would signal to the player that they need to put the VMU up to the mic
         console.log("Heard game start tone. Resetting.");
         reset();
     } else if (detectTone()) {
@@ -461,6 +459,7 @@ function transitionCueState(nextState: TimingCueState) {
             // carry the difference on the event timing thru to the found item timing
             // todo: when the timing is way off (more than 1s?) just drop the delta?
             // no need to reset as if the player is resetting we will hear it
+            // if no reset, it usually means the second tone was a false positive
             itemManipDelta = difference;
         } else {
             // don't carry the difference on item timing thru to event timing
