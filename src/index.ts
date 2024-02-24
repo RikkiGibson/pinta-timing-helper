@@ -565,14 +565,14 @@ function detectFingerprint(fingerprint: { frequency: number, amplitude: number }
         const previousKnownPeak = i == 0 ? null : fingerprint[i-1];
         /**
                    k
-              u    |
-          k---|----|--------k
-          |   |    |        |
-          |   |    |   u    |
-          |   |    |   |    |
+             u     |
+          k--|-----|
+          |  |     |
+          |  |  u  |
+          |  |  |  |
           k = "known peak" in signal, matching a fingerprint peak
           u = "unknown peak" in signal, not matching a fingerprint peak
-          in the above, the first 'u' is good, the second 'u' is bad.
+          in the above, the first 'u' is too high, the second 'u' is acceptable.
         */
 
         const frequencyTolerance = 2 * getSampleRate() / frequencyBinCount;
