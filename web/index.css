@@ -19,6 +19,8 @@ body {
 }
 
 .panel {
+    display: flex;
+    flex-direction: column;
     margin: 20px;
     padding: 10px;
     border-radius: 5px;
@@ -28,6 +30,13 @@ body {
 @media (max-height: 600px) {
     .panel {
         margin: 0;
+    }
+}
+
+@media (max-height: 500px) {
+    .panel {
+        flex-direction: row;
+        align-items: center;
     }
 }
 

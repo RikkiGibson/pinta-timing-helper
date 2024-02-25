@@ -9,81 +9,87 @@
 </head>
 
 <body>
-  <div class="column panel">
-    <div class="row header">
-      <div class="header-image">
-        <img src="img/Flag_pinta.webp" />
-      </div>
-    </div>
-    <div class="row header">
-      <canvas id="frequency-graph" class="padded"></canvas>
-    </div>
-    <div id="event-timing-visualizer" class="column timing-visualizer">
-      <div class="row timing-icons">
-        <div class="timing-spacer"></div>
-      </div>
-      <div class="row timing-meter">
-        <div class="timing-lead-up-meter">
-          <div class="timing-icon timing-lead-up">
-            <img src="img/triangle-lead-up.svg" />
-          </div>
-          <div class="timing-icon timing-lead-up">
-            <img src="img/triangle-lead-up.svg" />
-          </div>
-          <div class="timing-icon timing-lead-up">
-            <img src="img/triangle-lead-up.svg" />
-          </div>
-          <div class="timing-icon timing-target">
-            <img src="img/triangle-lead-up.svg" />
-          </div>
-          <div class="timing-line"></div>
-          <div class="timing-line"></div>
-          <div class="timing-line"></div>
-          <div class="timing-line"></div>
-          <div class="timing-meter-filled"></div>
-          <div class="timing-hit-marker">
-            <div class="timing-cursor"></div>
-            <div class="timing-description"></div>
-          </div>
+  <div class="panel">
+    <div class="column">
+      <div class="row header">
+        <div class="header-image">
+          <img src="img/Flag_pinta.webp" />
         </div>
       </div>
-      <div class="row timing-icons">
-        <div class="timing-spacer"></div>
+      <div class="row header">
+        <canvas id="frequency-graph" class="padded"></canvas>
       </div>
     </div>
-    <div id="item-timing-visualizer" class="column timing-visualizer">
-      <div class="row timing-icons">
-        <div class="timing-spacer"></div>
-      </div>
-      <div class="row timing-meter">
-        <div class="timing-lead-up-meter">
-          <div class="timing-icon timing-lead-up">
-            <img src="img/triangle-lead-up.svg" />
-          </div>
-          <div class="timing-icon timing-lead-up">
-            <img src="img/triangle-lead-up.svg" />
-          </div>
-          <div class="timing-icon timing-lead-up">
-            <img src="img/triangle-lead-up.svg" />
-          </div>
-          <div class="timing-icon timing-target">
-            <img src="img/triangle-lead-up.svg" />
-          </div>
-          <div class="timing-line"></div>
-          <div class="timing-line"></div>
-          <div class="timing-line"></div>
-          <div class="timing-line"></div>
-          <div class="timing-meter-filled"></div>
-          <div class="timing-hit-marker">
-            <div class="timing-cursor"></div>
-            <div class="timing-description"></div>
+
+    <div class="column">
+      <div id="event-timing-visualizer" class="column timing-visualizer">
+        <div class="row timing-icons">
+          <div class="timing-spacer"></div>
+        </div>
+        <div class="row timing-meter">
+          <div class="timing-lead-up-meter">
+            <div class="timing-icon timing-lead-up">
+              <img src="img/triangle-lead-up.svg" />
+            </div>
+            <div class="timing-icon timing-lead-up">
+              <img src="img/triangle-lead-up.svg" />
+            </div>
+            <div class="timing-icon timing-lead-up">
+              <img src="img/triangle-lead-up.svg" />
+            </div>
+            <div class="timing-icon timing-target">
+              <img src="img/triangle-lead-up.svg" />
+            </div>
+            <div class="timing-line"></div>
+            <div class="timing-line"></div>
+            <div class="timing-line"></div>
+            <div class="timing-line"></div>
+            <div class="timing-meter-filled"></div>
+            <div class="timing-hit-marker">
+              <div class="timing-cursor"></div>
+              <div class="timing-description"></div>
+            </div>
           </div>
         </div>
+        <div class="row timing-icons">
+          <div class="timing-spacer"></div>
+        </div>
       </div>
-      <div class="row timing-icons">
-        <div class="timing-spacer"></div>
-      </div>
+      <div id="item-timing-visualizer" class="column timing-visualizer">
+        <div class="row timing-icons">
+          <div class="timing-spacer"></div>
+        </div>
+        <div class="row timing-meter">
+          <div class="timing-lead-up-meter">
+            <div class="timing-icon timing-lead-up">
+              <img src="img/triangle-lead-up.svg" />
+            </div>
+            <div class="timing-icon timing-lead-up">
+              <img src="img/triangle-lead-up.svg" />
+            </div>
+            <div class="timing-icon timing-lead-up">
+              <img src="img/triangle-lead-up.svg" />
+            </div>
+            <div class="timing-icon timing-target">
+              <img src="img/triangle-lead-up.svg" />
+            </div>
+            <div class="timing-line"></div>
+            <div class="timing-line"></div>
+            <div class="timing-line"></div>
+            <div class="timing-line"></div>
+            <div class="timing-meter-filled"></div>
+            <div class="timing-hit-marker">
+              <div class="timing-cursor"></div>
+              <div class="timing-description"></div>
+            </div>
+          </div>
+        </div>
+        <div class="row timing-icons">
+          <div class="timing-spacer"></div>
+        </div>
+      </div>  
     </div>
+
     <div class="row controls">
       <div class="column">
         <button id="start-stop-button" class="padded">Start/stop</button>
