@@ -437,6 +437,16 @@ function transitionCueState(nextState: TimingCueState) {
             timingCursor.classList.add('hidden');
             // TODO: extract this remove-hidden, rationalize the way we recenter this element after showing it
             itemTimingElements.timingCursor.classList.remove('hidden');
+
+            if (Math.abs(itemManipDelta) >= 0.15) {
+                // If the event timing was far off of the target, and detection was working correctly,
+                // it means the user won't get the event they want and they need to reset.
+                // However, the event timing might have also picked up a false positive.
+                // In this case, user may want to be cued for the timing anyway, but with no delta.
+                // They'll have to rely more on feel in order to hit the item timing, but it's better than nothing.
+                itemManipDelta = 0;
+            }
+
             // when no measure indicators, can offset the cursor based on previous cue error.
             // But when there *are* measure indicators it's confusing/not necessary.
             itemTimingElements.timingCursor.style.left = `${(itemTimingElements.timingMeasureIndicators.length == 0 ? itemManipDelta * pixelsPerSecond : 0) - itemTimingElements.timingCursor.clientWidth / 2}px`;
