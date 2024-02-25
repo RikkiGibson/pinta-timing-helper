@@ -279,7 +279,7 @@ function adjustTimingMarkers() {
             dynamicElements.timingMeasureIndicators.push({ element: firstMeasureIndicator, time: firstMeasureTime });
             timingMeter.insertBefore(firstMeasureIndicator, dynamicElements.timingLeadUpMeter.element);
 
-            while (remainingMeasureIndicatorsTime >= (beatTime * 4)) {
+            while (remainingMeasureIndicatorsTime >= (beatTime * 4 - 1e-5)) {
                 const measureIndicator = makeTimingMeasureIndicator();
                 dynamicElements.timingMeasureIndicators.push({ element: measureIndicator, time: beatTime * 4 });
                 timingMeter.insertBefore(measureIndicator, dynamicElements.timingLeadUpMeter.element);
