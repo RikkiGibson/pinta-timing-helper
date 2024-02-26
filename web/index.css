@@ -38,6 +38,10 @@ body {
         flex-direction: row;
         align-items: center;
     }
+
+    .timing-visualizers {
+        min-width: 220px;
+    }
 }
 
 .row {
