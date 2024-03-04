@@ -27,7 +27,7 @@ body {
     background-color: darkgray;
 }
 
-@media (max-height: 600px) {
+@media (max-height: 620px) {
     .panel {
         margin: 0;
     }
@@ -41,6 +41,12 @@ body {
 
     .timing-visualizers {
         min-width: 220px;
+    }
+}
+
+@media (max-height: 500px) and (max-width: 600px) {
+    .column.status {
+        display: none;
     }
 }
 
@@ -71,6 +77,10 @@ body {
 
 #select-manips {
     margin: 5px;
+}
+
+option, button {
+    font-size: 16px;
 }
 
 .column {
