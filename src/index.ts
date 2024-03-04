@@ -474,13 +474,9 @@ function transitionCueState(nextState: TimingCueState, nextCueMode?: TimingCueMo
     } else if (nextState == TimingCueState.HeardSecondTone) {
         const difference = audioContext.currentTime - pendingAt;
         if (cueMode == TimingCueMode.Event) {
-            // carry the difference on the event timing thru to the found item timing
-            // todo: when the timing is way off (more than 1s?) just drop the delta?
-            // no need to reset as if the player is resetting we will hear it
-            // if no reset, it usually means the second tone was a false positive
+            // the delta between target/actual time for event affects the subsequent item timing
             itemManipDelta = difference;
         } else {
-            // don't carry the difference on item timing thru to event timing
             itemManipDelta = 0;
         }
         timingDescription.innerText = `${difference < 0 ? '-' : '+'}${Math.trunc(Math.abs(difference*1000))}ms`;
