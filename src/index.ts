@@ -388,15 +388,17 @@ function onFrame() {
 
     }
 
-    if (detectFingerprint(gameStartFingerprint)) {
+    if (cueState == TimingCueState.AwaitingFirstTone && detectFingerprint(gameStartFingerprint)) {
         console.log("Heard game start tone. Resetting.");
         reset();
     } else if (detectTone()) {
         onBeep();
     } else if (cueState == TimingCueState.CueingSecondTone) {
         if (audioContext.currentTime > pendingAt + 1) {
-            transitionCueState(TimingCueState.AwaitingFirstTone);
-            console.log(`Did not hear response in time. Resetting to pending state.`);
+            // if we miss the second tone on the item cue, stay on the item cue.
+            // the first tone of it might have been a false positive and player wants another shot at it.
+            transitionCueState(TimingCueState.AwaitingFirstTone, TimingCueMode.Item);
+            console.log(`Did not hear response in time. Resetting to ${TimingCueMode.Item} ${TimingCueState.AwaitingFirstTone}.`);
         }
     } else if (cueState == TimingCueState.HeardSecondTone && audioContext.currentTime > pendingAt + 1.0) {
         transitionCueState(TimingCueState.AwaitingFirstTone);
@@ -422,22 +424,28 @@ function reset() {
     itemManipDelta = 0;
 }
 
-function transitionCueState(nextState: TimingCueState) {
+function transitionCueState(nextState: TimingCueState, nextCueMode?: TimingCueMode) {
     const { timingLeadUps, timingTarget, timingMeasureIndicators, timingMeterFilled, timingCursor, timingDescription } =
         cueMode == TimingCueMode.Event ? eventTimingElements : itemTimingElements;
 
+    if (nextCueMode && nextState != TimingCueState.AwaitingFirstTone) {
+        throw new Error("Cue mode should only transition when moving to AwaitingFirstTone cue state");
+    }
+
     if (nextState == TimingCueState.AwaitingFirstTone) {
+        nextCueMode = nextCueMode ?? (cueMode == TimingCueMode.Event ? TimingCueMode.Item : TimingCueMode.Event);
         timingMeterFilled.style.width = '0';
         timingDescription.innerText = '';
         timingCursor.style.left = `${-timingCursor.clientWidth / 2}px`;
         timingLeadUps.forEach((elem) => elem.classList.remove('timing-hit'));
         timingMeasureIndicators.forEach((elem) => elem.element.classList.remove('timing-hit'));
         timingTarget.classList.remove('timing-hit');
-        if (cueMode == TimingCueMode.Event) {
+        if (nextCueMode == TimingCueMode.Item) {
             timingCursor.classList.add('hidden');
             // TODO: extract this remove-hidden, rationalize the way we recenter this element after showing it
             itemTimingElements.timingCursor.classList.remove('hidden');
 
+            // TODO: this may be no longer necessary due to timing restrictions in onBeep
             if (Math.abs(itemManipDelta) >= 0.15) {
                 // If the event timing was far off of the target, and detection was working correctly,
                 // it means the user won't get the event they want and they need to reset.
@@ -451,11 +459,11 @@ function transitionCueState(nextState: TimingCueState) {
             // But when there *are* measure indicators it's confusing/not necessary.
             itemTimingElements.timingCursor.style.left = `${(itemTimingElements.timingMeasureIndicators.length == 0 ? itemManipDelta * pixelsPerSecond : 0) - itemTimingElements.timingCursor.clientWidth / 2}px`;
             itemTimingElements.timingDescription.innerText = itemManipDelta == 0 ? '' : `${itemManipDelta < 0 ? '-' : '+'}${Math.trunc(Math.abs(itemManipDelta*1000))}ms`;
-            cueMode = TimingCueMode.Item;
+            cueMode = nextCueMode;
         } else {
             timingCursor.classList.add('hidden');
             eventTimingElements.timingCursor.classList.remove('hidden');
-            cueMode = TimingCueMode.Event;
+            cueMode = nextCueMode;
         }
     } else if (nextState == TimingCueState.CueingSecondTone) {
         timingDescription.innerText = '';
@@ -700,7 +708,7 @@ function onBeep() {
         return;
     }
 
-    if (cueState == TimingCueState.CueingSecondTone && audioContext.currentTime > timingStartAt + toneDuration) {
+    if (cueState == TimingCueState.CueingSecondTone && Math.abs(pendingAt - audioContext.currentTime) < 0.2) {
         transitionCueState(TimingCueState.HeardSecondTone);
         return;
     }
