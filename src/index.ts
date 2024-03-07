@@ -141,9 +141,8 @@ function ready() {
 
     document.addEventListener('keydown', onKey);
 
-    eventTimingElements = getTimingVisualizerElements(document.getElementById('event-timing-visualizer')!);
-    itemTimingElements = getTimingVisualizerElements(document.getElementById('item-timing-visualizer')!);
-    itemTimingElements.timingCursor.classList.add('hidden');
+    eventTimingElements = makeTimingVisualizerElements(document.getElementById('event-timing-visualizer')!);
+    itemTimingElements = makeTimingVisualizerElements(document.getElementById('item-timing-visualizer')!);
 
     selectItemTiming = document.getElementById('select-manips') as HTMLSelectElement;
     for (const option of itemTimingOptionValues) {
@@ -169,12 +168,12 @@ function ready() {
     canvasCtx.fillStyle = "rgb(200,200,200)";
     canvasCtx.fillRect(0, 0, canvasWidth, canvasHeight);
 
-    function getTimingVisualizerElements(timingVisualizer: HTMLElement): TimingVisualizerDynamicElements {
+    function makeTimingVisualizerElements(timingVisualizer: HTMLElement): TimingVisualizerDynamicElements {
         const timingLeadUpMeter = timingVisualizer.querySelector('.timing-lead-up-meter') as HTMLDivElement;
         const timingMeterFilled = timingVisualizer.querySelector('.timing-meter-filled') as HTMLDivElement;
 
         const timingCursor = timingVisualizer.querySelector('.timing-hit-marker') as HTMLDivElement;
-        timingCursor.style.left = `${-timingCursor.clientWidth / 2}px`;
+        timingCursor.classList.add('hidden');
 
         const timingDescription = timingVisualizer.querySelector('.timing-description') as HTMLDivElement;
         const timingLeadUps = [...timingVisualizer.querySelectorAll<HTMLDivElement>('.timing-lead-up')];
@@ -314,6 +313,10 @@ async function startOrStop() {
         return;
     }
 
+    if (cueMode != TimingCueMode.Event) {
+        throw new Error(`Unexpected starting cueMode '${cueMode}'`);
+    }
+
     running = true;
     if (!audioContext) audioContext = new AudioContext();
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -325,6 +328,8 @@ async function startOrStop() {
     const bufferLength = analyser.frequencyBinCount;
     dataArray = new Uint8Array(bufferLength);
     mediaSource.connect(analyser);
+    
+    reset();
     requestAnimationFrame(onFrame);
 }
 
@@ -414,8 +419,14 @@ function reset() {
         timingMeasureIndicators.forEach((elem) => elem.element.classList.remove('timing-hit'));
         timingTarget.classList.remove('timing-hit');
     }
-    eventTimingElements.timingCursor.classList.remove('hidden');
-    eventTimingElements.timingCursor.style.left = `${-eventTimingElements.timingCursor.clientWidth / 2}px`;
+
+    if (running) {
+        eventTimingElements.timingCursor.classList.remove('hidden');
+        eventTimingElements.timingCursor.style.left = `${-eventTimingElements.timingCursor.clientWidth / 2}px`;
+    } else {
+        eventTimingElements.timingCursor.classList.add('hidden');
+    }
+
     itemTimingElements.timingCursor.classList.add('hidden');
     cueMode = TimingCueMode.Event;
     cueState = TimingCueState.AwaitingFirstTone;
