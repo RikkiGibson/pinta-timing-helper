@@ -304,7 +304,6 @@ function makeTimingMeasureIndicator(): HTMLDivElement {
     return measureIndicator;
 }
 
-// TODO: also hide the timingCursor when audio is not running
 async function startOrStop() {
     if (running) {
         running = false;
