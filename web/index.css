@@ -44,7 +44,7 @@ body {
     }
 }
 
-@media (max-height: 500px) and (max-width: 600px) {
+@media (max-height: 500px) and (max-width: 750px) {
     .column.status {
         display: none;
     }
