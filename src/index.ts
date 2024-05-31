@@ -189,6 +189,16 @@ function ready() {
 }
 
 function onKey(ev: KeyboardEvent) {
+    if (ev.code === 'Minus') {
+        reset();
+        return;
+    }
+
+    if (ev.code === 'Equal') {
+        onBeep();
+        return;
+    }
+
     if (ev.code === 'BracketLeft' && selectItemTiming.selectedIndex > 0) {
         selectItemTiming.selectedIndex--;
         onTimingSelected();
