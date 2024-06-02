@@ -22,37 +22,43 @@
     </div>
 
     <div class="column timing-visualizers">
-      <div id="event-timing-visualizer" class="column timing-visualizer">
-        <div class="row timing-icons">
-          <div class="timing-spacer"></div>
-        </div>
-        <div class="row timing-meter">
-          <div class="timing-lead-up-meter">
-            <div class="timing-icon timing-lead-up">
-              <img src="img/triangle-lead-up.svg" />
-            </div>
-            <div class="timing-icon timing-lead-up">
-              <img src="img/triangle-lead-up.svg" />
-            </div>
-            <div class="timing-icon timing-lead-up">
-              <img src="img/triangle-lead-up.svg" />
-            </div>
-            <div class="timing-icon timing-target">
-              <img src="img/triangle-lead-up.svg" />
-            </div>
-            <div class="timing-line"></div>
-            <div class="timing-line"></div>
-            <div class="timing-line"></div>
-            <div class="timing-line"></div>
-            <div class="timing-meter-filled"></div>
-            <div class="timing-hit-marker">
-              <div class="timing-cursor"></div>
-              <div class="timing-description"></div>
+      <div class="event-timing-visualizer-and-clock">
+        <div id="event-timing-visualizer" class="column timing-visualizer">
+          <div class="row timing-icons">
+            <div class="timing-spacer"></div>
+          </div>
+          <div class="row timing-meter">
+            <div class="timing-lead-up-meter">
+              <div class="timing-icon timing-lead-up">
+                <img src="img/triangle-lead-up.svg" />
+              </div>
+              <div class="timing-icon timing-lead-up">
+                <img src="img/triangle-lead-up.svg" />
+              </div>
+              <div class="timing-icon timing-lead-up">
+                <img src="img/triangle-lead-up.svg" />
+              </div>
+              <div class="timing-icon timing-target">
+                <img src="img/triangle-lead-up.svg" />
+              </div>
+              <div class="timing-line"></div>
+              <div class="timing-line"></div>
+              <div class="timing-line"></div>
+              <div class="timing-line"></div>
+              <div class="timing-meter-filled"></div>
+              <div class="timing-hit-marker">
+                <div class="timing-cursor"></div>
+                <div class="timing-description"></div>
+              </div>
             </div>
           </div>
+          <div class="row timing-icons">
+            <div class="timing-spacer"></div>
+          </div>
         </div>
-        <div class="row timing-icons">
-          <div class="timing-spacer"></div>
+        <div class="clock">
+          <div class="clock-notch"></div>
+          <div id="clock-hand" class="clock-hand"></div>
         </div>
       </div>
       <div id="item-timing-visualizer" class="column timing-visualizer">
@@ -87,7 +93,7 @@
         <div class="row timing-icons">
           <div class="timing-spacer"></div>
         </div>
-      </div>  
+      </div>
     </div>
 
     <div class="row controls">
@@ -102,7 +108,7 @@
       </div>
     </div>
   </div>
-</div>
+  </div>
   <script src="js/index.js"></script>
 </body>
 

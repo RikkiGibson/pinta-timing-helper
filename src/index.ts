@@ -427,10 +427,13 @@ function reset() {
         timingTarget.classList.remove('timing-hit');
     }
 
+    const clockHand = document.getElementById('clock-hand')!;
     if (running) {
+        clockHand.classList.add('rotating');
         eventTimingElements.timingCursor.classList.remove('hidden');
         eventTimingElements.timingCursor.style.left = `${-eventTimingElements.timingCursor.clientWidth / 2}px`;
     } else {
+        clockHand.classList.remove('rotating');
         eventTimingElements.timingCursor.classList.add('hidden');
     }
 
