@@ -17,6 +17,10 @@ body {
     justify-content: center;
 }
 
+body.unfocused {
+    background-color: #07161d;
+}
+
 .panel {
     display: flex;
     flex-direction: column;

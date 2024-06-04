@@ -345,6 +345,12 @@ function onFrame() {
         return;
     }
 
+    if (document.hasFocus()) {
+        document.body.classList.remove('unfocused');
+    } else {
+        document.body.classList.add('unfocused');
+    }
+
     requestAnimationFrame(onFrame);
     analyser.getByteFrequencyData(dataArray);
     drawFrequencyGraph(dataArray);
