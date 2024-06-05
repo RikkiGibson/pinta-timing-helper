@@ -82,8 +82,13 @@ body.unfocused {
     margin: 5px;
 }
 
-option,
 button {
+    padding: 0;
+    font-size: 22px;
+    margin: 5px;
+}
+
+option {
     font-size: 16px;
 }
 
