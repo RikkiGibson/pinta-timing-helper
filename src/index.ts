@@ -108,14 +108,14 @@ interface ItemTiming { event: 'foundItem' | 'tradeShip', name: string, timingSec
 // Ideally the timings in here would be at around the midpoint of the real target range.
 // some, like Trade 3B->4B, seem to tend toward being hit late, though.
 const itemTimingOptionValues: ItemTiming[] = [
-    { event: 'foundItem', name: 'Pyrum / Crystalen Box', timingSeconds: 3.43 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🅰️
-    { event: 'foundItem', name: 'Idol / Hat / Berzerker Mail', timingSeconds: 6.1 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
-    { event: 'foundItem', name: 'Moonberry / Seed / Con Gem', timingSeconds: 4.48 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
-    { event: 'foundItem', name: 'Victory Mail / Eternum Box', timingSeconds: 4.38 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
     { event: 'foundItem', name: 'Wind Gem / Eye of Truth', timingSeconds: 1.55 }, // 🔉🛑🛑🅰️
+    { event: 'foundItem', name: 'Moonberry / Seed / Con Gem', timingSeconds: 4.48 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
+    { event: 'foundItem', name: 'Idol / Hat / Berzerker Mail', timingSeconds: 6.1 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
+    { event: 'foundItem', name: 'Pyrum / Crystalen Box', timingSeconds: 3.43 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🅰️
+    { event: 'foundItem', name: 'Victory Mail / Eternum Box', timingSeconds: 4.38 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
     { event: 'tradeShip', name: 'Trade 3B->4B', timingSeconds: 2.19 }, // 🔉🛑🛑🛑|🛑🅰️
+    { event: 'tradeShip', name: 'Trade 1B->4C', timingSeconds: 1.32 }, // 🔉🛑🛑🅰️
 
-    // { event: 'tradeShip', name: 'Trade 1B->4C', timingSeconds: 1.30 }, // 🔉🛑🛑🅰️
     // { event: 'tradeShip', name: 'Trade 3B->1A', timingSeconds: 4.47 }, // 🔉🛑🛑🛑|🛑🅰️ 4.36 is idol minus one measure. 4.4 is idol minus "almost one measure".
 ];
 
