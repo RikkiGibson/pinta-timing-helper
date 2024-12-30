@@ -15,7 +15,61 @@ async function onFileSelected(this: HTMLInputElement, ev: Event) {
     const str = String.fromCharCode(...filename);
     console.log(str);
     printItemCounts(vmuFileBytes);
+    giveBleigockBoxes(vmuFileBytes);
 
+    const blob = new Blob([vmuFileBytes.buffer]);
+    const link = document.getElementById('save-link') as HTMLAnchorElement;
+    link.href = URL.createObjectURL(blob);
+}
+
+function giveAllItems(vmuFileBytes: Uint8Array) {
+    const count = 127;
+
+    fillOneList(itemCounts.aItems, itemLists.aItems);
+    fillOneList(itemCounts.bItems, itemLists.bItems);
+    fillOneList(itemCounts.cItems, itemLists.cItems);
+    printItemCounts(vmuFileBytes);
+
+    function fillOneList(countOffset: number, listOffset: number) {
+        vmuFileBytes[countOffset] = count;
+        vmuFileBytes[listOffset] = count;
+
+        for (let i = 0; i < count; i++) {
+            vmuFileBytes[listOffset + 1 + i] = i + 128;
+        }
+    }
+
+}
+
+function giveBleigockBoxes(vmuFileBytes: Uint8Array) {
+    const aItemCount = 3;
+    vmuFileBytes[itemCounts.aItems] = aItemCount;
+    vmuFileBytes[itemLists.aItems] = aItemCount;
+
+    vmuFileBytes[itemLists.aItems + 1] = items["Wind Gem Ring"];
+    vmuFileBytes[itemLists.aItems + 2] = items["Wind Gem Ring"];
+    vmuFileBytes[itemLists.aItems + 3] = items["Moonberry"];
+
+    const bItemCount = 11;
+    vmuFileBytes[itemCounts.bItems] = bItemCount;
+    vmuFileBytes[itemLists.bItems] = bItemCount;
+
+    vmuFileBytes[itemLists.bItems + 1] = items["Wevles Box"];
+    vmuFileBytes[itemLists.bItems + 2] = items["Wevles Box"];
+    vmuFileBytes[itemLists.bItems + 3] = items["Wevles Box"];
+    vmuFileBytes[itemLists.bItems + 4] = items["Wevles Box"];
+    vmuFileBytes[itemLists.bItems + 5] = items["Wevles Box"];
+    vmuFileBytes[itemLists.bItems + 6] = items["Wevles Box"];
+    vmuFileBytes[itemLists.bItems + 7] = items["Crystales Box"];
+    vmuFileBytes[itemLists.bItems + 8] = items["Crystales Box"];
+    vmuFileBytes[itemLists.bItems + 9] = items["Crystales Box"];
+    vmuFileBytes[itemLists.bItems + 10] = items["Crystales Box"];
+    vmuFileBytes[itemLists.bItems + 11] = items["Crystales Box"];
+
+    printItemCounts(vmuFileBytes);
+}
+
+function giveInstaIdols(vmuFileBytes: Uint8Array) {
     const count = 3;
     vmuFileBytes[itemCounts.aItems] = count;
     vmuFileBytes[itemLists.aItems] = count;
@@ -23,10 +77,6 @@ async function onFileSelected(this: HTMLInputElement, ev: Event) {
     vmuFileBytes[itemLists.aItems + 2] = items["Magillex Idol"];
     vmuFileBytes[itemLists.aItems + 3] = items["Moonberry"];
     printItemCounts(vmuFileBytes);
-
-    const blob = new Blob([vmuFileBytes.buffer]);
-    const link = document.getElementById('save-link') as HTMLAnchorElement;
-    link.href = URL.createObjectURL(blob);
 }
 
 function printItemCounts(vmuFileBytes: Uint8Array) {
