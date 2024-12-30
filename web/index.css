@@ -243,6 +243,21 @@ option {
     background-color: gray;
 }
 
+.clock-prediction-notch {
+    position: absolute;
+    transform-origin: bottom;
+    width: 4px;
+    bottom: 50%;
+    height: 18px;
+    left: 18px;
+}
+
+.clock-prediction-notch-tip {
+    height: 40%;
+    border-radius: 1px;
+    background-color: red;
+}
+
 .clock-hand {
     position: absolute;
     transform-origin: bottom;

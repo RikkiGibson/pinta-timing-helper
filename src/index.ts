@@ -21,7 +21,12 @@ let running = false;
 let cueMode = TimingCueMode.Event;
 let cueState = TimingCueState.AwaitingFirstTone;
 
+/** contains the last time the reset tone was heard, or undefined if the reset tone has not been heard yet. */
+let lastResetTime: number | undefined;
+
+/** if {@link cueState} is {@link TimingCueState.CueingSecondTone}, contains the time that the second tone is expected. */
 let pendingAt: number;
+/** if {@link cueState} is {@link TimingCueState.CueingSecondTone}, contains the time that the first tone was heard. */
 let timingStartAt: number;
 
 /**
@@ -131,7 +136,7 @@ function ready() {
         .addEventListener('click', startOrStop);
 
     document.getElementById('reset-button')!
-        .addEventListener('click', reset);
+        .addEventListener('click', () => reset(true));
 
     document.getElementById('beep-button')!
         .addEventListener('click', onBeep);
@@ -157,6 +162,9 @@ function ready() {
     selectItemTiming.value = selectedItemTiming.name;
 
     adjustTimingMarkers();
+
+    const clockPredictionNotch = document.getElementById('clock-prediction-notch')!;
+    clockPredictionNotch.classList.add('hidden');
 
     canvas = document.getElementById('frequency-graph') as HTMLCanvasElement;
     canvasCtx = canvas.getContext("2d")!;
@@ -190,7 +198,7 @@ function ready() {
 
 function onKey(ev: KeyboardEvent) {
     if (ev.code === 'Minus') {
-        reset();
+        reset(true);
         return;
     }
 
@@ -316,7 +324,7 @@ async function startOrStop() {
         running = false;
         await audioContext.close();
         audioContext = null!;
-        reset();
+        reset(true);
         return;
     }
 
@@ -335,8 +343,8 @@ async function startOrStop() {
     const bufferLength = analyser.frequencyBinCount;
     dataArray = new Uint8Array(bufferLength);
     mediaSource.connect(analyser);
-    
-    reset();
+
+    reset(true);
     requestAnimationFrame(onFrame);
 }
 
@@ -407,8 +415,7 @@ function onFrame() {
     }
 
     if (cueState == TimingCueState.AwaitingFirstTone && detectFingerprint(gameStartFingerprint)) {
-        console.log("Heard game start tone. Resetting.");
-        reset();
+        reset(false);
     } else if (detectTone()) {
         onBeep();
     } else if (cueState == TimingCueState.CueingSecondTone) {
@@ -424,7 +431,34 @@ function onFrame() {
     }
 }
 
-function reset() {
+function showClockPredictionNotch() {
+    const clockPredictionNotch = document.getElementById('clock-prediction-notch')!;
+    clockPredictionNotch.classList.remove('hidden');
+
+    const clockHand = document.getElementById('clock-hand')!;
+    const style = window.getComputedStyle(clockHand, null);
+    clockPredictionNotch.style.transform = style.getPropertyValue('transform');
+}
+
+/**
+ * @param manual false if the reset was triggered by an audio cue; otherwise, true.
+ */
+function reset(manual: boolean) {
+    if (!manual) {
+        if (!running) {
+            throw new Error("Audio cues should only trigger an event if an audio context is running");
+        }
+
+        const currentTime = audioContext.currentTime;
+        if (lastResetTime !== undefined && currentTime - lastResetTime < beatTime * 3) {
+            // Ignore an auto-reset if it came too soon after the most recent auto-reset.
+            return;
+        }
+
+        console.log("Heard game start tone. Resetting.");
+        lastResetTime = audioContext.currentTime;
+    }
+
     for (const { timingMeterFilled, timingDescription, timingMeasureIndicators, timingLeadUps, timingTarget } of [eventTimingElements, itemTimingElements]) {
         timingMeterFilled.style.width = '0';
         timingDescription.innerText = '';
@@ -441,6 +475,15 @@ function reset() {
     } else {
         clockHand.classList.remove('rotating');
         eventTimingElements.timingCursor.classList.add('hidden');
+    }
+
+    const clockPredictionNotch = document.getElementById('clock-prediction-notch')!;
+    if (!running || manual) {
+        clockPredictionNotch.classList.add('hidden');
+    } else {
+        clockPredictionNotch.classList.remove('hidden');
+        const style = window.getComputedStyle(clockHand, null);
+        clockPredictionNotch.style.transform = style.getPropertyValue('transform');
     }
 
     itemTimingElements.timingCursor.classList.add('hidden');
