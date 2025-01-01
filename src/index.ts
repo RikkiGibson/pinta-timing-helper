@@ -450,7 +450,7 @@ function reset(manual: boolean) {
         }
 
         const currentTime = audioContext.currentTime;
-        if (lastResetTime !== undefined && currentTime - lastResetTime < beatTime * 3) {
+        if (lastResetTime !== undefined && currentTime - lastResetTime < beatTime * 4) {
             // Ignore an auto-reset if it came too soon after the most recent auto-reset.
             return;
         }
