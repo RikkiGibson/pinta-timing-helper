@@ -453,7 +453,7 @@ function reset(manual: boolean) {
         if (lastResetTime !== undefined
             && currentTime > lastResetTime
             && currentTime - lastResetTime < beatTime * 4) {
-            // Ignore an auto-reset if it was in the past and came too soon after the most recent auto-reset.
+            // Ignore an auto-reset if the most recent one was in the too recent past.
             return;
         }
 
