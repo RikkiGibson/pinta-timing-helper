@@ -29,15 +29,6 @@ let pendingAt: number;
 /** if {@link cueState} is {@link TimingCueState.CueingSecondTone}, contains the time that the first tone was heard. */
 let timingStartAt: number;
 
-/**
- * Actual time minus target time that an event manip was hit.
- * Factored in to the duration of the subsequent item manip.
- * Positive means the event manip was late and the item manip should be shorter.
- * Negative means the event manip was early and the item manip should be longer.
- **/
-let itemManipDelta = 0;
-
-
 let audioContext: AudioContext;
 let analyser: AnalyserNode;
 let dataArray: Uint8Array;
@@ -103,9 +94,6 @@ const eventTimingOptions = {
     tradeShip: 2.1, // 🔉🔉🔉|🅰️🛑🛑🛑|🛑🅱️
 };
 
-// TODO would like if the checklist were included directly in this tool.
-// Maybe timing selection would be next to the relevant checklist items.
-// e.g. maybe you need 3B->4B trades. Let's keep Found B Item next to that.
 interface ItemTiming { event: 'foundItem' | 'tradeShip', name: string, timingSeconds: number };
 
 // The timings drift in PQ itself over time.
@@ -113,6 +101,7 @@ interface ItemTiming { event: 'foundItem' | 'tradeShip', name: string, timingSec
 // Ideally the timings in here would be at around the midpoint of the real target range.
 // some, like Trade 3B->4B, seem to tend toward being hit late, though.
 const itemTimingOptionValues: ItemTiming[] = [
+    // TODO: WGR, Seed, Idol timing are all too short. Maybe do some logging/adjustment to make them more on the dot.
     { event: 'foundItem', name: 'Wind Gem / Eye of Truth', timingSeconds: 1.55 }, // 🔉🛑🛑🅰️
     { event: 'foundItem', name: 'Moonberry / Seed / Con Gem', timingSeconds: 4.48 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
     { event: 'foundItem', name: 'Idol / Hat / Berzerker Mail', timingSeconds: 6.1 }, // 🔉🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🛑🛑|🛑🛑🅰️
@@ -390,7 +379,7 @@ function onFrame() {
 
     if (cueState == TimingCueState.CueingSecondTone) {
         // fill measures
-        let remainingTime = itemManipDelta + audioContext.currentTime - timingStartAt;
+        let remainingTime = audioContext.currentTime - timingStartAt;
         let i = 0;
         for (const { element, time } of timingMeasureIndicators) {
             if (remainingTime < time) {
@@ -493,7 +482,6 @@ function reset(manual: boolean) {
     cueState = TimingCueState.AwaitingFirstTone;
     timingStartAt = 0;
     pendingAt = 0;
-    itemManipDelta = 0;
 }
 
 function transitionCueState(nextState: TimingCueState, nextCueMode?: TimingCueMode) {
@@ -517,20 +505,10 @@ function transitionCueState(nextState: TimingCueState, nextCueMode?: TimingCueMo
             // TODO: extract this remove-hidden, rationalize the way we recenter this element after showing it
             itemTimingElements.timingCursor.classList.remove('hidden');
 
-            // TODO: this may be no longer necessary due to timing restrictions in onBeep
-            if (Math.abs(itemManipDelta) >= 0.15) {
-                // If the event timing was far off of the target, and detection was working correctly,
-                // it means the user won't get the event they want and they need to reset.
-                // However, the event timing might have also picked up a false positive.
-                // In this case, user may want to be cued for the timing anyway, but with no delta.
-                // They'll have to rely more on feel in order to hit the item timing, but it's better than nothing.
-                itemManipDelta = 0;
-            }
-
             // when no measure indicators, can offset the cursor based on previous cue error.
             // But when there *are* measure indicators it's confusing/not necessary.
-            itemTimingElements.timingCursor.style.left = `${(itemTimingElements.timingMeasureIndicators.length == 0 ? itemManipDelta * pixelsPerSecond : 0) - itemTimingElements.timingCursor.clientWidth / 2}px`;
-            itemTimingElements.timingDescription.innerText = itemManipDelta == 0 ? '' : `${itemManipDelta < 0 ? '-' : '+'}${Math.trunc(Math.abs(itemManipDelta*1000))}ms`;
+            itemTimingElements.timingCursor.style.left = `${-itemTimingElements.timingCursor.clientWidth / 2}px`;
+            itemTimingElements.timingDescription.innerText = '';
             cueMode = nextCueMode;
         } else {
             timingCursor.classList.add('hidden');
@@ -541,16 +519,10 @@ function transitionCueState(nextState: TimingCueState, nextCueMode?: TimingCueMo
         timingDescription.innerText = '';
         timingStartAt = audioContext.currentTime;
         const currentTimingSeconds = getCurrentTimingSeconds();
-        pendingAt = timingStartAt + currentTimingSeconds - itemManipDelta;
+        pendingAt = timingStartAt + currentTimingSeconds;
         console.log(`Heard first tone ${audioContext.currentTime}. Scheduling cue sound for ${currentTimingSeconds}s`);
     } else if (nextState == TimingCueState.HeardSecondTone) {
         const difference = audioContext.currentTime - pendingAt;
-        if (cueMode == TimingCueMode.Event) {
-            // the delta between target/actual time for event affects the subsequent item timing
-            itemManipDelta = difference;
-        } else {
-            itemManipDelta = 0;
-        }
         timingDescription.innerText = `${difference < 0 ? '-' : '+'}${Math.trunc(Math.abs(difference*1000))}ms`;
         console.log(`Heard second tone at ${audioContext.currentTime} (expected at ${pendingAt})`);
     }
